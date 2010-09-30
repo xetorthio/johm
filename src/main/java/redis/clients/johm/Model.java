@@ -15,9 +15,10 @@ public class Model extends JOhm {
     private Integer id = null;
 
     private Integer initializeId() {
-	return nest().cat("id").incr();
+	return nest.cat("id").incr();
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Model> T save() {
 	try {
 	    final Map<String, String> hashedObject = new HashMap<String, String>();
@@ -31,16 +32,25 @@ public class Model extends JOhm {
 		    .getDeclaredFields()));
 
 	    for (Field field : fields) {
-		if (field.getAnnotation(Attribute.class) != null) {
+		if (field.isAnnotationPresent(Attribute.class)) {
 		    field.setAccessible(true);
 		    hashedObject.put(field.getName(), field.get(this)
 			    .toString());
 		}
+		if (field.isAnnotationPresent(Reference.class)) {
+		    field.setAccessible(true);
+		    JOhm.checkValidReference(field);
+		    Model model = (Model) field.get(this);
+		    if (model != null) {
+			hashedObject.put(JOhm.getReferenceFieldName(field),
+				String.valueOf(model.getId()));
+		    }
+		}
 	    }
-	    nest().multi(new TransactionBlock() {
+	    nest.multi(new TransactionBlock() {
 		public void execute() throws JedisException {
-		    nest().cat(getId()).del();
-		    nest().cat(getId()).hmset(hashedObject);
+		    client.del(nest.cat(getId()).key());
+		    client.hmset(nest.cat(getId()).key(), hashedObject);
 		}
 	    });
 	    return (T) this;
@@ -58,11 +68,7 @@ public class Model extends JOhm {
 	return id;
     }
 
-    private Nest nest() {
-	return getNest().cat(this.getClass().getSimpleName());
-    }
-
     public String key() {
-	return nest().cat(getId()).key();
+	return nest.cat(getId()).key();
     }
 }
