@@ -138,4 +138,16 @@ public class Nest {
 	jedisPool.returnResource(jedis);
 	return hgetAll;
     }
+
+    public Integer exists() {
+	Jedis jedis;
+	try {
+	    jedis = jedisPool.getResource();
+	} catch (TimeoutException e) {
+	    throw new JOhmException(e);
+	}
+	Integer exists = jedis.exists(key());
+	jedisPool.returnResource(jedis);
+	return exists;
+    }
 }

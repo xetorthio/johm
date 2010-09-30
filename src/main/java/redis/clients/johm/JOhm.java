@@ -1,6 +1,9 @@
 package redis.clients.johm;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Map;
 
 import redis.clients.jedis.JedisPool;
@@ -27,10 +30,12 @@ public class JOhm {
 	try {
 	    newInstance = clazz.newInstance();
 
+	    if (newInstance.nest.cat(id).exists().intValue() == 0) {
+		return null;
+	    }
 	    Map<String, String> hashedObject = newInstance.nest.cat(id)
 		    .hgetAll();
 
-	    System.out.println(hashedObject);
 	    for (Field field : clazz.getDeclaredFields()) {
 		fillField(hashedObject, newInstance, field);
 	    }
@@ -72,11 +77,62 @@ public class JOhm {
     }
 
     private static Object convert(Field field, String value) {
-	if (field.getType().equals(Integer.class)) {
-	    return new Integer(value);
-	} else {
-	    return value;
+	Class<?> type = field.getType();
+	if (type.equals(Byte.class) || type.equals(byte.class)) {
+	    return new Byte(value);
 	}
+	if (type.equals(Character.class) || type.equals(char.class)) {
+	    if (value != null && value.trim().length() > 0) {
+		return value.charAt(0);
+	    } else {
+		// This is the default value
+		return '\u0000';
+	    }
+	}
+	if (type.equals(Short.class) || type.equals(short.class)) {
+	    return new Short(value);
+	}
+	if (type.equals(Integer.class) || type.equals(int.class)) {
+	    if (value == null) {
+		return 0;
+	    }
+	    return new Integer(value);
+	}
+	if (type.equals(Float.class) || type.equals(float.class)) {
+	    if (value == null) {
+		return 0L;
+	    }
+	    return new Float(value);
+	}
+	if (type.equals(Double.class) || type.equals(double.class)) {
+	    return new Double(value);
+	}
+	if (type.equals(Long.class) || type.equals(long.class)) {
+	    return new Long(value);
+	}
+
+	// Higher precision folks
+	if (type.equals(BigDecimal.class)) {
+	    return new BigDecimal(value);
+	}
+	if (type.equals(BigInteger.class)) {
+	    return new BigInteger(value);
+	}
+
+	if (type.isEnum()) {
+	    // return Enum.valueOf(type, value);
+	    return null; // TODO: handle these
+	}
+
+	// Collections not yet supported
+	if (type.equals(Collection.class)) {
+	    return null; // TODO: handle these
+	}
+	if (type.isArray()) {
+	    return null; // TODO: handle these
+	}
+
+	return value;
     }
 
     protected static void checkValidReference(Field field) {
@@ -86,4 +142,12 @@ public class JOhm {
 	}
     }
 
+    public static boolean delete(Class<? extends Model> clazz, int id) {
+	boolean deleted = false;
+	Model persistedModel = get(clazz, id);
+	if (persistedModel != null) {
+	    deleted = persistedModel.nest.cat(id).del() == 1;
+	}
+	return deleted;
+    }
 }

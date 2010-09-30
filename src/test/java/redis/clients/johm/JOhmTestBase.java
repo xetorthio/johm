@@ -2,7 +2,6 @@ package redis.clients.johm;
 
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -21,10 +20,5 @@ public class JOhmTestBase extends Assert {
 	Jedis jedis = jedisPool.getResource();
 	jedis.flushAll();
 	jedisPool.returnResource(jedis);
-    }
-
-    @After
-    public void after() {
-	jedisPool.destroy();
     }
 }

@@ -34,8 +34,11 @@ public class Model extends JOhm {
 	    for (Field field : fields) {
 		if (field.isAnnotationPresent(Attribute.class)) {
 		    field.setAccessible(true);
-		    hashedObject.put(field.getName(), field.get(this)
-			    .toString());
+		    Object fieldValue = field.get(this);
+		    if (fieldValue != null) {
+			hashedObject
+				.put(field.getName(), fieldValue.toString());
+		    }
 		}
 		if (field.isAnnotationPresent(Reference.class)) {
 		    field.setAccessible(true);
@@ -47,10 +50,11 @@ public class Model extends JOhm {
 		    }
 		}
 	    }
+
 	    nest.multi(new TransactionBlock() {
 		public void execute() throws JedisException {
-		    client.del(nest.cat(getId()).key());
-		    client.hmset(nest.cat(getId()).key(), hashedObject);
+		    del(nest.cat(getId()).key());
+		    hmset(nest.cat(getId()).key(), hashedObject);
 		}
 	    });
 	    return (T) this;
@@ -70,5 +74,9 @@ public class Model extends JOhm {
 
     public String key() {
 	return nest.cat(getId()).key();
+    }
+
+    public boolean delete() {
+	return JOhm.delete(this.getClass(), getId());
     }
 }
