@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,54 +16,63 @@ public class Model extends JOhm {
     private Integer id = null;
 
     private Integer initializeId() {
-	return nest().cat("id").incr();
+        return nest().cat("id").incr();
     }
 
     public <T extends Model> T save() {
-	try {
-	    final Map<String, String> hashedObject = new HashMap<String, String>();
+        try {
+            final Map<String, String> hashedObject = new HashMap<String, String>();
 
-	    if (this.id == null) {
-		this.id = initializeId();
-	    }
-	    List<Field> fields = new ArrayList<Field>();
-	    fields.addAll(Arrays.asList(this.getClass().getDeclaredFields()));
-	    fields.addAll(Arrays.asList(this.getClass().getSuperclass()
-		    .getDeclaredFields()));
+            if (this.id == null) {
+                this.id = initializeId();
+            }
+            List<Field> fields = new ArrayList<Field>();
+            fields.addAll(Arrays.asList(this.getClass().getDeclaredFields()));
+            fields.addAll(Arrays.asList(this.getClass().getSuperclass()
+                    .getDeclaredFields()));
 
-	    for (Field field : fields) {
-		if (field.getAnnotation(Attribute.class) != null) {
-		    field.setAccessible(true);
-		    hashedObject.put(field.getName(), field.get(this)
-			    .toString());
-		}
-	    }
-	    nest().multi(new TransactionBlock() {
-		public void execute() throws JedisException {
-		    nest().cat(getId()).del();
-		    nest().cat(getId()).hmset(hashedObject);
-		}
-	    });
-	    return (T) this;
-	} catch (IllegalArgumentException e) {
-	    throw new JOhmException(e);
-	} catch (IllegalAccessException e) {
-	    throw new JOhmException(e);
-	}
+            for (Field field : fields) {
+                if (field.getAnnotation(Attribute.class) != null) {
+                    field.setAccessible(true);
+                    hashedObject.put(field.getName(), field.get(this)
+                            .toString());
+                }
+            }
+            nest().multi(new TransactionBlock() {
+                public void execute() throws JedisException {
+                    nest().cat(getId()).del();
+                    nest().cat(getId()).hmset(hashedObject);
+                }
+            });
+            return (T) this;
+        } catch (IllegalArgumentException e) {
+            throw new JOhmException(e);
+        } catch (IllegalAccessException e) {
+            throw new JOhmException(e);
+        }
+    }
+    
+    public boolean delete() {
+        boolean deleted = false;
+        Model persistedModel = get(this.getClass(), getId());
+        if (persistedModel != null) {
+            deleted = nest().cat(getId()).del() == 1;
+        }
+        return deleted;
     }
 
     public int getId() {
-	if (id == null) {
-	    throw new MissingIdException();
-	}
-	return id;
+        if (id == null) {
+            throw new MissingIdException();
+        }
+        return id;
     }
 
     private Nest nest() {
-	return getNest().cat(this.getClass().getSimpleName());
+        return getNest().cat(this.getClass().getSimpleName());
     }
 
     public String key() {
-	return nest().cat(getId()).key();
+        return nest().cat(getId()).key();
     }
 }
