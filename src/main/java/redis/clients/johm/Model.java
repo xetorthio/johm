@@ -1,82 +1,85 @@
 package redis.clients.johm;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import redis.clients.jedis.JedisException;
-import redis.clients.jedis.TransactionBlock;
-
+/**
+ * JOhm's Model is the fundamental abstraction of a persistable entity in Redis.
+ * Any object desired to be persisted to Redis, should extend this class and
+ * declare corresponding persistable Attribute's, Reference's, and Indexed's.
+ */
 public class Model extends JOhm {
     @Attribute
-    private Integer id = null;
+    private Integer id = Integer.MIN_VALUE;
 
-    private Integer initializeId() {
-	return nest.cat("id").incr();
-    }
-
-    @SuppressWarnings("unchecked")
+    /**
+     * Persist Model in its current state to Redis.
+     * 
+     * @return
+     */
     public <T extends Model> T save() {
-	try {
-	    final Map<String, String> hashedObject = new HashMap<String, String>();
-
-	    if (this.id == null) {
-		this.id = initializeId();
-	    }
-	    List<Field> fields = new ArrayList<Field>();
-	    fields.addAll(Arrays.asList(this.getClass().getDeclaredFields()));
-	    fields.addAll(Arrays.asList(this.getClass().getSuperclass()
-		    .getDeclaredFields()));
-
-	    for (Field field : fields) {
-		if (field.isAnnotationPresent(Attribute.class)) {
-		    field.setAccessible(true);
-		    Object fieldValue = field.get(this);
-		    if (fieldValue != null) {
-			hashedObject
-				.put(field.getName(), fieldValue.toString());
-		    }
-		}
-		if (field.isAnnotationPresent(Reference.class)) {
-		    field.setAccessible(true);
-		    JOhm.checkValidReference(field);
-		    Model model = (Model) field.get(this);
-		    if (model != null) {
-			hashedObject.put(JOhm.getReferenceFieldName(field),
-				String.valueOf(model.getId()));
-		    }
-		}
-	    }
-
-	    nest.multi(new TransactionBlock() {
-		public void execute() throws JedisException {
-		    del(nest.cat(getId()).key());
-		    hmset(nest.cat(getId()).key(), hashedObject);
-		}
-	    });
-	    return (T) this;
-	} catch (IllegalArgumentException e) {
-	    throw new JOhmException(e);
-	} catch (IllegalAccessException e) {
-	    throw new JOhmException(e);
-	}
+        return JOhm.save(this);
     }
 
-    public int getId() {
-	if (id == null) {
-	    throw new MissingIdException();
-	}
-	return id;
-    }
-
-    public String key() {
-	return nest.cat(getId()).key();
-    }
-
+    /**
+     * Delete this Model from Redis.
+     * 
+     * @return Success status of deletion.
+     */
     public boolean delete() {
-	return JOhm.delete(this.getClass(), getId());
+        return delete(false);
     }
+
+    /**
+     * Delete this Model and all its children from Redis if deleteChildren flag
+     * is set.
+     * 
+     * @param deleteChildren
+     * @return
+     */
+    public boolean delete(boolean deleteChildren) {
+        return JOhm.delete(this.getClass(), getId(), deleteChildren);
+    }
+
+    /**
+     * Get the Model from Redis as specified by given id.
+     * 
+     * @param id
+     * @return
+     */
+    public static <T extends Model> T get(int id) {
+        throw new UnsupportedOperationException(
+                "Get will soon be supported on Model, just not yet");
+    }
+
+    /**
+     * Search a Model in redis index using its attribute's given name/value
+     * pair. This can potentially return more than 1 matches if some indexed
+     * Model's have identical attributeValue for given attributeName.
+     * 
+     * @param attributeName
+     * @param attributeValue
+     * @return
+     */
+    public static List<? extends Model> find(String attributeName,
+            Object attributeValue) {
+        throw new UnsupportedOperationException(
+                "Find will soon be supported on Model, just not yet");
+    }
+
+    /**
+     * Get the id of this Model.
+     * 
+     * @return
+     */
+    public int getId() {
+        if (id == Integer.MIN_VALUE) {
+            throw new MissingIdException();
+        }
+        return id;
+    }
+
+    void initializeId() {
+        id = nest.cat("id").incr();
+    }
+
 }

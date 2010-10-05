@@ -1,14 +1,17 @@
 package redis.clients.johm.models;
 
 import redis.clients.johm.Attribute;
+import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
 
 public class User extends Model {
     @Attribute
+    @Indexed
     private String name;
     private String room;
     @Attribute
+    @Indexed
     private int age;
     @Attribute
     private float salary;
