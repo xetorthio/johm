@@ -72,10 +72,11 @@ public class Model extends JOhm {
      * @return
      */
     public Integer getId() {
-        if (id == null) {
-            throw new MissingIdException();
-        }
         return id;
+    }
+
+    protected boolean isNew() {
+        return id == null;
     }
 
     void initializeId() {

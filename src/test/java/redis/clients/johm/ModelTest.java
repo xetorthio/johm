@@ -8,13 +8,6 @@ import redis.clients.johm.models.Country;
 import redis.clients.johm.models.User;
 
 public class ModelTest extends JOhmTestBase {
-
-    @Test(expected = MissingIdException.class)
-    public void cannotGetIdWhenNew() {
-        User user = new User();
-        user.getId();
-    }
-
     @Test
     public void checkModelPersistence() {
         User user = new User();

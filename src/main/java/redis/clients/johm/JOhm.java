@@ -89,11 +89,7 @@ public class JOhm {
         try {
             final Map<String, String> hashedObject = new HashMap<String, String>();
 
-            try {
-                if (model.getId() == null) {
-                    model.initializeId();
-                }
-            } catch (MissingIdException e) {
+            if (model.getId() == null) {
                 model.initializeId();
             }
             List<Field> fields = new ArrayList<Field>();
@@ -121,6 +117,9 @@ public class JOhm {
                     JOhmUtils.checkValidReference(field);
                     Model reference = Model.class.cast(field.get(model));
                     if (reference != null) {
+                        if (reference.getId() == null) {
+                            throw new MissingIdException();
+                        }
                         fieldValue = String.valueOf(reference.getId());
                         hashedObject.put(fieldName, fieldValue);
                     }
