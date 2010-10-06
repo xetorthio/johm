@@ -63,7 +63,8 @@ public class JOhm {
      *            Attribute's value to search in index
      * @return
      */
-    public static List<? extends Model> find(Class<? extends Model> clazz,
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> find(Class<? extends Model> clazz,
             String attributeName, Object attributeValue) {
         List<Model> results = null;
         String key = JOhmUtils.createSearchKey(attributeName, attributeValue);
@@ -80,7 +81,7 @@ public class JOhm {
                 }
             }
         }
-        return results;
+        return (List<T>) results;
     }
 
     @SuppressWarnings("unchecked")
@@ -89,7 +90,7 @@ public class JOhm {
             final Map<String, String> hashedObject = new HashMap<String, String>();
 
             try {
-                if (model.getId() == Integer.MIN_VALUE) {
+                if (model.getId() == null) {
                     model.initializeId();
                 }
             } catch (MissingIdException e) {
@@ -217,8 +218,8 @@ public class JOhm {
             throws IllegalAccessException {
         if (field.isAnnotationPresent(Attribute.class)) {
             field.setAccessible(true);
-            field.set(newInstance,
-                    JOhmUtils.convert(field, hashedObject.get(field.getName())));
+            field.set(newInstance, JOhmUtils.convert(field, hashedObject
+                    .get(field.getName())));
         }
         if (field.isAnnotationPresent(Reference.class)) {
             JOhmUtils.checkValidReference(field);
@@ -227,10 +228,8 @@ public class JOhm {
                     .getReferenceFieldName(field));
             if (serializedReferenceId != null) {
                 Integer referenceId = Integer.valueOf(serializedReferenceId);
-                field.set(
-                        newInstance,
-                        get((Class<? extends Model>) field.getType(),
-                                referenceId));
+                field.set(newInstance, get((Class<? extends Model>) field
+                        .getType(), referenceId));
             }
         }
     }

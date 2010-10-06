@@ -139,7 +139,7 @@ public class ModelTest extends JOhmTestBase {
         assertNotNull(JOhm.get(User.class, id1));
         assertNotNull(JOhm.get(User.class, id2));
 
-        List<User> users = (List<User>) JOhm.find(User.class, "age", 88);
+        List<User> users = JOhm.find(User.class, "age", 88);
         assertEquals(1, users.size());
         User user1Found = users.get(0);
         assertEquals(user1Found.getAge(), user1.getAge());
@@ -148,7 +148,7 @@ public class ModelTest extends JOhmTestBase {
         assertEquals(user1Found.getSalary(), user1.getSalary(), 0D);
         assertEquals(user1Found.getInitial(), user1.getInitial());
 
-        users = (List<User>) JOhm.find(User.class, "age", 8);
+        users = JOhm.find(User.class, "age", 8);
         assertEquals(1, users.size());
         User user2Found = users.get(0);
         assertEquals(user2Found.getAge(), user2.getAge());
@@ -157,7 +157,7 @@ public class ModelTest extends JOhmTestBase {
         assertEquals(user2Found.getSalary(), user2.getSalary(), 0D);
         assertEquals(user2Found.getInitial(), user2.getInitial());
 
-        users = (List<User>) JOhm.find(User.class, "name", "model1");
+        users = JOhm.find(User.class, "name", "model1");
         assertEquals(1, users.size());
         User user3Found = users.get(0);
         assertEquals(user3Found.getAge(), user1.getAge());
@@ -166,7 +166,7 @@ public class ModelTest extends JOhmTestBase {
         assertEquals(user3Found.getSalary(), user1.getSalary(), 0D);
         assertEquals(user3Found.getInitial(), user1.getInitial());
 
-        users = (List<User>) JOhm.find(User.class, "name", "zmodel2");
+        users = JOhm.find(User.class, "name", "zmodel2");
         assertEquals(1, users.size());
         User user4Found = users.get(0);
         assertEquals(user4Found.getAge(), user2.getAge());
@@ -174,12 +174,6 @@ public class ModelTest extends JOhmTestBase {
         assertNull(user4Found.getRoom());
         assertEquals(user4Found.getSalary(), user2.getSalary(), 0D);
         assertEquals(user4Found.getInitial(), user2.getInitial());
-
-        // cleanup now
-        assertTrue(user1.delete());
-        assertNull(JOhm.get(User.class, id1));
-        assertTrue(user2.delete());
-        assertNull(JOhm.get(User.class, id2));
     }
 
     @Test

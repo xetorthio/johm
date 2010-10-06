@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class Model extends JOhm {
     @Attribute
-    private Integer id = Integer.MIN_VALUE;
+    private Integer id = null;
 
     /**
      * Persist Model in its current state to Redis.
@@ -71,8 +71,8 @@ public class Model extends JOhm {
      * 
      * @return
      */
-    public int getId() {
-        if (id == Integer.MIN_VALUE) {
+    public Integer getId() {
+        if (id == null) {
             throw new MissingIdException();
         }
         return id;
