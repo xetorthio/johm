@@ -72,32 +72,27 @@ final class JOhmUtils {
         }
     }
 
-    static String getReferenceFieldName(final Field field) {
+    static boolean isIndexable(final String attributeName) {
+        // Prevent null/empty keys and null/empty values
+        if (attributeName != null && attributeName.trim().length() > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    static String getReferenceKeyName(final Field field) {
         return field.getName() + "_id";
     }
 
-    static String createSearchKey(final String attributeName,
-            final Object attributeValue) {
-        String key = null;
-        // Prevent null/empty keys and null/empty values but allow
-        // whitespace as a set value
-        if (attributeName != null && attributeName.trim().length() > 0) {
-            if (attributeValue != null) {
-                String value = attributeValue.toString();
-                if (!isNullOrEmpty(value)) {
-                    key = attributeName.trim() + ":" + value;
-                }
-            }
+    static boolean isNullOrEmpty(Object obj) {
+        if (obj == null) {
+            return true;
         }
-        return key;
-    }
-
-    static boolean isNullOrEmpty(String string) {
-        boolean isNullOrEmpty = false;
-        if (string == null || string.trim().length() == 0) {
-            isNullOrEmpty = true;
+        if (obj.toString().trim().length() == 0) {
+            return true;
         }
 
-        return isNullOrEmpty;
+        return false;
     }
 }

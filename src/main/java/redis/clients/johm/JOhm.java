@@ -20,7 +20,6 @@ import redis.clients.jedis.TransactionBlock;
  * TODO: make a decision on what API to keep public.
  */
 public class JOhm {
-    private static JedisPool jedisPool;
     protected Nest nest = null;
 
     @SuppressWarnings("unchecked")
@@ -67,17 +66,35 @@ public class JOhm {
     public static <T> List<T> find(Class<? extends Model> clazz,
             String attributeName, Object attributeValue) {
         List<Model> results = null;
-        String key = JOhmUtils.createSearchKey(attributeName, attributeValue);
-        if (key != null) {
-            Set<String> modelIdStrings = Nest.smembers(key);
-            if (modelIdStrings != null) {
-                results = new ArrayList<Model>();
-                Model indexed = null;
-                for (String modelIdString : modelIdStrings) {
-                    indexed = get(clazz, Integer.parseInt(modelIdString));
-                    if (indexed != null) {
-                        results.add(indexed);
-                    }
+        if (!JOhmUtils.isIndexable(attributeName)) {
+            throw new InvalidFieldException();
+        }
+
+        try {
+            Field field = clazz.getDeclaredField(attributeName);
+            field.setAccessible(true);
+            if (!field.isAnnotationPresent(Indexed.class)) {
+                throw new InvalidFieldException();
+            }
+        } catch (SecurityException e) {
+            throw new InvalidFieldException();
+        } catch (NoSuchFieldException e) {
+            throw new InvalidFieldException();
+        }
+        if (JOhmUtils.isNullOrEmpty(attributeValue)) {
+            throw new InvalidFieldException();
+        }
+        Nest nest = new Nest(clazz);
+        Set<String> modelIdStrings = nest.cat(attributeName)
+                .cat(attributeValue).smembers();
+        if (modelIdStrings != null) {
+            // TODO: Do this lazy
+            results = new ArrayList<Model>();
+            Model indexed = null;
+            for (String modelIdString : modelIdStrings) {
+                indexed = get(clazz, Integer.parseInt(modelIdString));
+                if (indexed != null) {
+                    results.add(indexed);
                 }
             }
         }
@@ -113,7 +130,7 @@ public class JOhm {
                 if (field.isAnnotationPresent(Reference.class)) {
                     isReference = true;
                     field.setAccessible(true);
-                    fieldName = JOhmUtils.getReferenceFieldName(field);
+                    fieldName = JOhmUtils.getReferenceKeyName(field);
                     JOhmUtils.checkValidReference(field);
                     Model reference = Model.class.cast(field.get(model));
                     if (reference != null) {
@@ -126,10 +143,12 @@ public class JOhm {
                 }
                 if (field.isAnnotationPresent(Indexed.class)) {
                     if (isAttribute) {
-                        String key = JOhmUtils.createSearchKey(fieldName,
-                                fieldValue);
-                        if (key != null) {
-                            Nest.sadd(key, String.valueOf(model.getId()));
+                        if (!JOhmUtils.isIndexable(fieldName)) {
+                            throw new InvalidFieldException();
+                        }
+                        if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
+                            model.nest.cat(fieldName).cat(fieldValue).sadd(
+                                    String.valueOf(model.getId()));
                         }
                         continue;
                     }
@@ -204,11 +223,11 @@ public class JOhm {
      * @param jedisPool
      */
     public static void setPool(JedisPool jedisPool) {
-        JOhm.jedisPool = jedisPool;
+        Nest.setJedisPool(jedisPool);
     }
 
     protected JOhm() {
-        nest = new Nest(this.getClass().getSimpleName(), jedisPool);
+        nest = new Nest(this);
     }
 
     @SuppressWarnings("unchecked")
@@ -224,7 +243,7 @@ public class JOhm {
             JOhmUtils.checkValidReference(field);
             field.setAccessible(true);
             String serializedReferenceId = hashedObject.get(JOhmUtils
-                    .getReferenceFieldName(field));
+                    .getReferenceKeyName(field));
             if (serializedReferenceId != null) {
                 Integer referenceId = Integer.valueOf(serializedReferenceId);
                 field.set(newInstance, get((Class<? extends Model>) field

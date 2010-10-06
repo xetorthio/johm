@@ -110,6 +110,39 @@ public class ModelTest extends JOhmTestBase {
         assertNull(JOhm.get(User.class, id));
     }
 
+    @Test(expected = InvalidFieldException.class)
+    public void cannotSearchOnNullField() {
+        User user1 = new User();
+        user1.setName("model1");
+        user1.setRoom("tworoom");
+        user1.setAge(88);
+        user1.save();
+
+        JOhm.find(User.class, null, "foo");
+    }
+
+    @Test(expected = InvalidFieldException.class)
+    public void cannotSearchWithNullValue() {
+        User user1 = new User();
+        user1.setName("model1");
+        user1.setRoom("tworoom");
+        user1.setAge(88);
+        user1.save();
+
+        JOhm.find(User.class, "age", null);
+    }
+
+    @Test(expected = InvalidFieldException.class)
+    public void cannotSearchWithOnNotIndexedFields() {
+        User user1 = new User();
+        user1.setName("model1");
+        user1.setRoom("tworoom");
+        user1.setAge(88);
+        user1.save();
+
+        JOhm.find(User.class, "salary", 1000);
+    }
+
     @Test
     public void checkModelSearch() {
         User user1 = new User();

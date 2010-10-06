@@ -18,14 +18,24 @@ final class Nest {
     private String key;
     private static JedisPool jedisPool;
 
-    Nest(JedisPool jedis) {
-        this.key = "";
-        Nest.jedisPool = jedis;
+    public static void setJedisPool(JedisPool jedisPool) {
+        Nest.jedisPool = jedisPool;
     }
 
-    Nest(String key, JedisPool jedis) {
+    public Nest() {
+        this.key = "";
+    }
+
+    public Nest(String key) {
         this.key = key;
-        Nest.jedisPool = jedis;
+    }
+
+    public Nest(Class<? extends Model> clazz) {
+        this.key = clazz.getSimpleName();
+    }
+
+    public Nest(JOhm jOhm) {
+        this.key = jOhm.getClass().getSimpleName();
     }
 
     String key() {
@@ -114,23 +124,21 @@ final class Nest {
         return exists;
     }
 
-    static Integer sadd(String key, String member) {
+    public Integer sadd(String member) {
         Jedis jedis = getResource();
-        Integer reply = jedis.sadd(key, member);
+        Integer reply = jedis.sadd(key(), member);
         jedisPool.returnResource(jedis);
         return reply;
     }
 
-    static Integer sismember(String key, String member) {
+    /*
+     * static Integer sismember(String key, String member) { Jedis jedis =
+     * getResource(); Integer reply = jedis.sismember(key, member);
+     * jedisPool.returnResource(jedis); return reply; }
+     */
+    public Set<String> smembers() {
         Jedis jedis = getResource();
-        Integer reply = jedis.sismember(key, member);
-        jedisPool.returnResource(jedis);
-        return reply;
-    }
-
-    static Set<String> smembers(String key) {
-        Jedis jedis = getResource();
-        Set<String> members = jedis.smembers(key);
+        Set<String> members = jedis.smembers(key());
         jedisPool.returnResource(jedis);
         return members;
     }
@@ -143,6 +151,13 @@ final class Nest {
             throw new JOhmException(e);
         }
         return jedis;
+    }
+
+    public Nest cat(Object field) {
+        prefix();
+        sb.append(field);
+        sb.append(COLON);
+        return this;
     }
 
 }
