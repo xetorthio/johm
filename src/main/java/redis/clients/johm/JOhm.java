@@ -176,6 +176,10 @@ public class JOhm {
         }
     }
 
+    public static boolean delete(Class<? extends Model> clazz, int id) {
+        return delete(clazz, id, false);
+    }
+
     /**
      * 
      * @param clazz
