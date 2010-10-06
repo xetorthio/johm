@@ -106,7 +106,7 @@ public class JOhm {
         try {
             final Map<String, String> hashedObject = new HashMap<String, String>();
 
-            if (model.getId() == null) {
+            if (model.isNew()) {
                 model.initializeId();
             }
             List<Field> fields = new ArrayList<Field>();

@@ -1,6 +1,9 @@
 package redis.clients.johm.models;
 
+import java.util.List;
+
 import redis.clients.johm.Attribute;
+import redis.clients.johm.CollectionList;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
@@ -19,52 +22,58 @@ public class User extends Model {
     private char initial;
     @Reference
     private Country country;
+    @CollectionList(of = Item.class)
+    private List<Item> likes;
+
+    public List<Item> getLikes() {
+        return likes;
+    }
 
     public Country getCountry() {
-	return country;
+        return country;
     }
 
     public void setCountry(Country country) {
-	this.country = country;
+        this.country = country;
     }
 
     public String getRoom() {
-	return room;
+        return room;
     }
 
     public void setRoom(String room) {
-	this.room = room;
+        this.room = room;
     }
 
     public String getName() {
-	return name;
+        return name;
     }
 
     public void setName(String name) {
-	this.name = name;
+        this.name = name;
     }
 
     public int getAge() {
-	return age;
+        return age;
     }
 
     public void setAge(int age) {
-	this.age = age;
+        this.age = age;
     }
 
     public float getSalary() {
-	return salary;
+        return salary;
     }
 
     public void setSalary(float salary) {
-	this.salary = salary;
+        this.salary = salary;
     }
 
     public char getInitial() {
-	return initial;
+        return initial;
     }
 
     public void setInitial(char initial) {
-	this.initial = initial;
+        this.initial = initial;
     }
 }

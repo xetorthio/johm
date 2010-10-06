@@ -1,6 +1,9 @@
 package redis.clients.johm;
 
+import java.lang.reflect.Field;
 import java.util.List;
+
+import redis.clients.johm.collections.RedisList;
 
 /**
  * JOhm's Model is the fundamental abstraction of a persistable entity in Redis.
@@ -10,6 +13,26 @@ import java.util.List;
 public class Model extends JOhm {
     @Attribute
     private Integer id = null;
+
+    @SuppressWarnings("unchecked")
+    public Model() {
+        for (Field field : this.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            if (field.isAnnotationPresent(CollectionList.class)) {
+                try {
+                    Nest n = nest.cat(field.getName()).fork();
+                    CollectionList annotation = field
+                            .getAnnotation(CollectionList.class);
+                    RedisList list = new RedisList<Model>(annotation.of(), n);
+                    field.set(this, list);
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidFieldException();
+                } catch (IllegalAccessException e) {
+                    throw new InvalidFieldException();
+                }
+            }
+        }
+    }
 
     /**
      * Persist Model in its current state to Redis.
@@ -72,15 +95,22 @@ public class Model extends JOhm {
      * @return
      */
     public Integer getId() {
+        if (isNew()) {
+            throw new MissingIdException();
+        }
         return id;
     }
 
+    /**
+     * Indicate if the model is new
+     * 
+     * @return
+     */
     protected boolean isNew() {
         return id == null;
     }
 
-    void initializeId() {
+    protected void initializeId() {
         id = nest.cat("id").incr();
     }
-
 }
