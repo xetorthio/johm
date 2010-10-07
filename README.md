@@ -41,6 +41,11 @@ And this is a small example (getters and setters are not included for the sake o
     	private String text;
 	}
 
+Initiating JOhm:
+    jedisPool = new JedisPool("localhost");
+    jedisPool.init();
+    JOhm.setPool(jedisPool);
+
 Creating a User and persisting it:
 
 	User someOne = new User();
