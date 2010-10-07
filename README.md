@@ -2,12 +2,12 @@
 
 JOhm is a Object-hash mapping library for Java inspired on the awesome [Ohm](http://github.com/soveran/ohm).
 
-JOhm is a library for storing objects in Redis, a persistent key-value database.
+JOhm is a library for storing objects in [Redis](http://github.com/antirez/redis), a persistent key-value database.
 
 ## What can I do with JOhm?
 Right now it is still in development. So just the following features are available.
 
-- Basic attribute persistance (String, Integer, etc...)
+- Basic attribute persistence (String, Integer, etc...)
 - Auto-numeric Ids
 - Simple References
 - Indexes
@@ -20,7 +20,7 @@ Stay close! It is growing pretty fast!
 ## How do I use it?
 
 You can download the latests build at: 
-    http://github.com/xetorthio/johm/downloads
+    [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
 
 And this is a small example (getters and setters are not included for the sake of simplicity):
     
