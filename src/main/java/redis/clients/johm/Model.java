@@ -2,7 +2,6 @@ package redis.clients.johm;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Set;
 
 import redis.clients.johm.collections.RedisList;
 import redis.clients.johm.collections.RedisSet;
