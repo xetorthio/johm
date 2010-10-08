@@ -132,8 +132,8 @@ public class JOhm {
                     }
                     if (field.isAnnotationPresent(Indexed.class)) {
                         if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
-                            model.nest.cat(fieldName).cat(fieldValue)
-                                    .sadd(String.valueOf(model.getId()));
+                            model.nest.cat(fieldName).cat(fieldValue).sadd(
+                                    String.valueOf(model.getId()));
                         }
                     }
                 }
@@ -142,9 +142,6 @@ public class JOhm {
                     fieldName = JOhmUtils.getReferenceKeyName(field);
                     Model child = Model.class.cast(field.get(model));
                     if (child != null) {
-                        if (child.getId() == null) {
-                            throw new MissingIdException();
-                        }
                         if (saveChildren) {
                             save(child, saveChildren); // some more work to do
                         }
@@ -233,10 +230,8 @@ public class JOhm {
         JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
         if (field.isAnnotationPresent(Attribute.class)) {
             field.setAccessible(true);
-            field.set(
-                    newInstance,
-                    JOhmUtils.Convertor.convert(field,
-                            hashedObject.get(field.getName())));
+            field.set(newInstance, JOhmUtils.Convertor.convert(field,
+                    hashedObject.get(field.getName())));
         }
         if (field.isAnnotationPresent(Reference.class)) {
             field.setAccessible(true);
@@ -244,10 +239,8 @@ public class JOhm {
                     .getReferenceKeyName(field));
             if (serializedReferenceId != null) {
                 Integer referenceId = Integer.valueOf(serializedReferenceId);
-                field.set(
-                        newInstance,
-                        get((Class<? extends Model>) field.getType(),
-                                referenceId));
+                field.set(newInstance, get((Class<? extends Model>) field
+                        .getType(), referenceId));
             }
         }
     }
