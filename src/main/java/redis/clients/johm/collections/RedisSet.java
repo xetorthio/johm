@@ -9,6 +9,14 @@ import redis.clients.johm.JOhm;
 import redis.clients.johm.Model;
 import redis.clients.johm.Nest;
 
+/**
+ * RedisSet is a JOhm-internal Set implementation to serve as a proxy for the
+ * Redis persisted set and provide lazy-loading semantics to minimize datastore
+ * network traffic. It does a best-effort job of minimizing set entity staleness
+ * but does so without any locking and is not thread-safe. It also maintains
+ * whatever order in which Redis returns its set elements. Only add and remove
+ * trigger a remote-sync of local internal storage.
+ */
 public class RedisSet<T extends Model> implements Set<T> {
     private final Nest nest;
     private final Class<? extends Model> clazz;
@@ -22,7 +30,11 @@ public class RedisSet<T extends Model> implements Set<T> {
 
     @Override
     public int size() {
-        return nest.smembers().size();
+        int repoSize = nest.smembers().size();
+        if (repoSize != elements.size()) {
+            refreshStorage();
+        }
+        return repoSize;
     }
 
     @Override
@@ -53,19 +65,12 @@ public class RedisSet<T extends Model> implements Set<T> {
 
     @Override
     public boolean add(T element) {
-        return nest.sadd(element.getId().toString()) > 0;
+        return internalAdd(element, true);
     }
 
     @Override
     public boolean remove(Object o) {
-        // Since we cannot guarantee all Model's will provide a reasonable
-        // equals() and hashCode() implementation, using remove() on the Set
-        // cannot guarantee container-storage purge.
-        if (!elements.isEmpty()) {
-            elements.clear();
-        }
-        Model element = Model.class.cast(o);
-        return nest.srem(element.getId().toString()) > 0;
+        return internalRemove(o, true);
     }
 
     @Override
@@ -77,8 +82,9 @@ public class RedisSet<T extends Model> implements Set<T> {
     public boolean addAll(Collection<? extends T> collection) {
         boolean success = true;
         for (T element : collection) {
-            success &= this.add(element);
+            success &= internalAdd(element, false);
         }
+        refreshStorage();
         return success;
     }
 
@@ -91,8 +97,9 @@ public class RedisSet<T extends Model> implements Set<T> {
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
-            success &= this.add(element);
+            success &= internalAdd(element, false);
         }
+        refreshStorage();
         return success;
     }
 
@@ -104,18 +111,45 @@ public class RedisSet<T extends Model> implements Set<T> {
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
-            success &= this.remove(element);
+            success &= internalRemove(element, false);
         }
+        refreshStorage();
         return success;
     }
 
     @Override
     public void clear() {
         nest.del();
+        elements.clear();
+    }
+
+    private boolean internalAdd(T element, boolean refreshStorage) {
+        boolean success = nest.sadd(element.getId().toString()) > 0;
+        if (refreshStorage) { // don't trust success-value too much
+            refreshStorage();
+        }
+        return success;
+    }
+
+    private boolean internalRemove(Object o, boolean refreshStorage) {
+        Model element = Model.class.cast(o);
+        boolean success = nest.srem(element.getId().toString()) > 0;
+        if (refreshStorage) { // don't trust success-value too much
+            // Since we cannot guarantee all Model's will provide a reasonable
+            // equals() and hashCode() implementation, using remove() on the Set
+            // cannot guarantee container-storage purge.
+            refreshStorage();
+        }
+        return success;
+    }
+
+    private synchronized void refreshStorage() {
+        elements.clear();
+        scrollElements();
     }
 
     @SuppressWarnings("unchecked")
-    private Set<T> scrollElements() {
+    private synchronized Set<T> scrollElements() {
         if (elements.isEmpty()) {
             Set<String> ids = nest.smembers();
             for (String id : ids) {
