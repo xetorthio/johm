@@ -20,8 +20,7 @@ Stay close! It is growing pretty fast!
 
 ## How do I use it?
 
-You can download the latests build at: 
-    [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
+You can download the latests build at [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
 
 And this is a small example (getters and setters are not included for the sake of simplicity):
     
