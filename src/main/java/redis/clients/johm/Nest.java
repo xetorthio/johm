@@ -130,6 +130,13 @@ public class Nest {
         jedisPool.returnResource(jedis);
         return reply;
     }
+    
+    public Integer srem(String member) {
+        Jedis jedis = getResource();
+        Integer reply = jedis.srem(key(), member);
+        jedisPool.returnResource(jedis);
+        return reply;
+    }
 
     public Set<String> smembers() {
         Jedis jedis = getResource();

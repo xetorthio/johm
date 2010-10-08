@@ -2,8 +2,10 @@ package redis.clients.johm;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Set;
 
 import redis.clients.johm.collections.RedisList;
+import redis.clients.johm.collections.RedisSet;
 
 /**
  * JOhm's Model is the fundamental abstraction of a persistable entity in Redis.
@@ -18,18 +20,27 @@ public class Model extends JOhm {
     public Model() {
         for (Field field : this.getClass().getDeclaredFields()) {
             field.setAccessible(true);
-            if (field.isAnnotationPresent(CollectionList.class)) {
-                try {
+            try {
+                if (field.isAnnotationPresent(CollectionList.class)) {
+                    JOhmUtils.Validator.checkValidCollection(field);
                     Nest n = nest.cat(field.getName()).fork();
                     CollectionList annotation = field
                             .getAnnotation(CollectionList.class);
                     RedisList list = new RedisList<Model>(annotation.of(), n);
                     field.set(this, list);
-                } catch (IllegalArgumentException e) {
-                    throw new InvalidFieldException();
-                } catch (IllegalAccessException e) {
-                    throw new InvalidFieldException();
                 }
+                if (field.isAnnotationPresent(CollectionSet.class)) {
+                    JOhmUtils.Validator.checkValidCollection(field);
+                    Nest n = nest.cat(field.getName()).fork();
+                    CollectionSet annotation = field
+                            .getAnnotation(CollectionSet.class);
+                    RedisSet set = new RedisSet<Model>(annotation.of(), n);
+                    field.set(this, set);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new InvalidFieldException();
+            } catch (IllegalAccessException e) {
+                throw new InvalidFieldException();
             }
         }
     }

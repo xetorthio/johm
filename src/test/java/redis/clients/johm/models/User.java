@@ -1,9 +1,11 @@
 package redis.clients.johm.models;
 
 import java.util.List;
+import java.util.Set;
 
 import redis.clients.johm.Attribute;
 import redis.clients.johm.CollectionList;
+import redis.clients.johm.CollectionSet;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
@@ -24,9 +26,15 @@ public class User extends Model {
     private Country country;
     @CollectionList(of = Item.class)
     private List<Item> likes;
+    @CollectionSet(of = Item.class)
+    private Set<Item> purchases;
 
     public List<Item> getLikes() {
         return likes;
+    }
+
+    public Set<Item> getPurchases() {
+        return purchases;
     }
 
     public Country getCountry() {

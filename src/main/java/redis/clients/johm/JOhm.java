@@ -66,7 +66,7 @@ public class JOhm {
     public static <T> List<T> find(Class<? extends Model> clazz,
             String attributeName, Object attributeValue) {
         List<Model> results = null;
-        if (!JOhmUtils.isIndexable(attributeName)) {
+        if (!JOhmUtils.Validator.isIndexable(attributeName)) {
             throw new InvalidFieldException();
         }
 
@@ -101,8 +101,13 @@ public class JOhm {
         return (List<T>) results;
     }
 
-    @SuppressWarnings("unchecked")
     public static <T extends Model> T save(final Model model) {
+        return save(model, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Model> T save(final Model model,
+            boolean saveChildren) {
         try {
             final Map<String, String> hashedObject = new HashMap<String, String>();
 
@@ -115,10 +120,9 @@ public class JOhm {
                     .getDeclaredFields()));
 
             String fieldName = null, fieldValue = null;
-            boolean isAttribute = false, isReference = false;
             for (Field field : fields) {
+                JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
                 if (field.isAnnotationPresent(Attribute.class)) {
-                    isAttribute = true;
                     field.setAccessible(true);
                     fieldName = field.getName();
                     Object fieldValueObject = field.get(model);
@@ -126,39 +130,27 @@ public class JOhm {
                         fieldValue = fieldValueObject.toString();
                         hashedObject.put(fieldName, fieldValue);
                     }
+                    if (field.isAnnotationPresent(Indexed.class)) {
+                        if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
+                            model.nest.cat(fieldName).cat(fieldValue)
+                                    .sadd(String.valueOf(model.getId()));
+                        }
+                    }
                 }
                 if (field.isAnnotationPresent(Reference.class)) {
-                    isReference = true;
                     field.setAccessible(true);
                     fieldName = JOhmUtils.getReferenceKeyName(field);
-                    JOhmUtils.checkValidReference(field);
-                    Model reference = Model.class.cast(field.get(model));
-                    if (reference != null) {
-                        if (reference.getId() == null) {
+                    Model child = Model.class.cast(field.get(model));
+                    if (child != null) {
+                        if (child.getId() == null) {
                             throw new MissingIdException();
                         }
-                        fieldValue = String.valueOf(reference.getId());
+                        if (saveChildren) {
+                            save(child, saveChildren); // some more work to do
+                        }
+                        fieldValue = String.valueOf(child.getId());
                         hashedObject.put(fieldName, fieldValue);
                     }
-                }
-                if (field.isAnnotationPresent(Indexed.class)) {
-                    if (isAttribute) {
-                        if (!JOhmUtils.isIndexable(fieldName)) {
-                            throw new InvalidFieldException();
-                        }
-                        if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
-                            model.nest.cat(fieldName).cat(fieldValue).sadd(
-                                    String.valueOf(model.getId()));
-                        }
-                        continue;
-                    }
-                    if (isReference) {
-                        // Revisit this in the future
-                        throw new UnsupportedOperationException(
-                                "Reference indexing is not yet supported");
-                    }
-                    throw new UnsupportedOperationException(
-                            "Indexing is not supported for unpersisted fields");
                 }
             }
 
@@ -238,20 +230,24 @@ public class JOhm {
     private static void fillField(final Map<String, String> hashedObject,
             final Model newInstance, final Field field)
             throws IllegalAccessException {
+        JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
         if (field.isAnnotationPresent(Attribute.class)) {
             field.setAccessible(true);
-            field.set(newInstance, JOhmUtils.convert(field, hashedObject
-                    .get(field.getName())));
+            field.set(
+                    newInstance,
+                    JOhmUtils.Convertor.convert(field,
+                            hashedObject.get(field.getName())));
         }
         if (field.isAnnotationPresent(Reference.class)) {
-            JOhmUtils.checkValidReference(field);
             field.setAccessible(true);
             String serializedReferenceId = hashedObject.get(JOhmUtils
                     .getReferenceKeyName(field));
             if (serializedReferenceId != null) {
                 Integer referenceId = Integer.valueOf(serializedReferenceId);
-                field.set(newInstance, get((Class<? extends Model>) field
-                        .getType(), referenceId));
+                field.set(
+                        newInstance,
+                        get((Class<? extends Model>) field.getType(),
+                                referenceId));
             }
         }
     }
