@@ -14,6 +14,7 @@ Right now it is still in development. So just the following features are availab
 - Simple finders (on just one attribute)
 - Deletion
 - List relationship
+- Set relationship
 
 Stay close! It is growing pretty fast!
 
@@ -34,11 +35,18 @@ And this is a small example (getters and setters are not included for the sake o
     	private Country country;
     	@CollectionList(of = Comment.class)
     	private List<Comment> comments;
+    	@CollectionSet(of = Item.class)
+    	private Set<Item> purchases;
     }
 
 	class Comment extends Model {
     	@Attribute
     	private String text;
+	}
+
+	class Item extends Model {
+    	@Attribute
+    	private String name;
 	}
 
 Initiating JOhm:
@@ -88,6 +96,18 @@ Model with a list of nested models:
 	aComment.save();
 	
 	someOne.getComments.add(aComment);
+
+Model with a set of nested models:
+
+	User someOne = new User();
+	...
+	someOne.save();
+	
+	Item anItem = new Item();
+	...
+	anItem.save();
+	
+	someOne.getPurchases.add(anItem);
 
 For more usage examples check the tests. Soon I will add a nice wiki with everything you should know.
 
