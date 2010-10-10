@@ -47,17 +47,17 @@ public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
 
     @Override
     public boolean containsKey(Object key) {
-        return backingMap.containsKey(key);
+        return scrollElements().containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return backingMap.containsValue(value);
+        return scrollElements().containsValue(value);
     }
 
     @Override
     public Set<java.util.Map.Entry<K, V>> entrySet() {
-        return backingMap.entrySet();
+        return scrollElements().entrySet();
     }
 
     @Override
@@ -119,7 +119,7 @@ public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
 
     @Override
     public Collection<V> values() {
-        return backingMap.values();
+        return scrollElements().values();
     }
 
     private V internalPut(final K key, final V value, boolean refreshStorage) {

@@ -10,7 +10,8 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
 
 /**
- * 
+ * Nest serves as a remote proxy for Jedis-to-Redis bridge. Its name signifies
+ * nested namespaced key generation for Redis by using chainable namespaces.
  */
 public class Nest {
     private static final String COLON = ":";

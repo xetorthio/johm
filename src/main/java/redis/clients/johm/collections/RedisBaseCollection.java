@@ -5,7 +5,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 
+ * This class provides the common contract for asynchronous operations on
+ * internal storage management of all JOhm collections.
  */
 abstract class RedisBaseCollection {
     // The choice of single-threaded executor is driven by current use of
