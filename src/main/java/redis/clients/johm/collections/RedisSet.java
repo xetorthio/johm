@@ -17,7 +17,8 @@ import redis.clients.johm.Nest;
  * whatever order in which Redis returns its set elements. Only add and remove
  * trigger a remote-sync of local internal storage.
  */
-public class RedisSet<T extends Model> implements Set<T> {
+public class RedisSet<T extends Model> extends RedisBaseCollection implements
+        Set<T> {
     private final Nest nest;
     private final Class<? extends Model> clazz;
     private final Set<T> elements;
@@ -32,7 +33,7 @@ public class RedisSet<T extends Model> implements Set<T> {
     public int size() {
         int repoSize = nest.smembers().size();
         if (repoSize != elements.size()) {
-            refreshStorage();
+            refreshStorage(true);
         }
         return repoSize;
     }
@@ -84,7 +85,7 @@ public class RedisSet<T extends Model> implements Set<T> {
         for (T element : collection) {
             success &= internalAdd(element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return success;
     }
 
@@ -99,7 +100,7 @@ public class RedisSet<T extends Model> implements Set<T> {
             T element = (T) iterator.next();
             success &= internalAdd(element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return success;
     }
 
@@ -113,7 +114,7 @@ public class RedisSet<T extends Model> implements Set<T> {
             T element = (T) iterator.next();
             success &= internalRemove(element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return success;
     }
 
@@ -124,9 +125,10 @@ public class RedisSet<T extends Model> implements Set<T> {
     }
 
     private boolean internalAdd(T element, boolean refreshStorage) {
+        element.save();
         boolean success = nest.sadd(element.getId().toString()) > 0;
         if (refreshStorage) { // don't trust success-value too much
-            refreshStorage();
+            refreshStorage(true);
         }
         return success;
     }
@@ -134,16 +136,17 @@ public class RedisSet<T extends Model> implements Set<T> {
     private boolean internalRemove(Object o, boolean refreshStorage) {
         Model element = Model.class.cast(o);
         boolean success = nest.srem(element.getId().toString()) > 0;
+        element.delete();
         if (refreshStorage) { // don't trust success-value too much
             // Since we cannot guarantee all Model's will provide a reasonable
             // equals() and hashCode() implementation, using remove() on the Set
             // cannot guarantee container-storage purge.
-            refreshStorage();
+            refreshStorage(true);
         }
         return success;
     }
 
-    private synchronized void refreshStorage() {
+    protected synchronized void purgeScrollStorage() {
         elements.clear();
         scrollElements();
     }

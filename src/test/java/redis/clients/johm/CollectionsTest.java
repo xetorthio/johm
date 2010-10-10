@@ -3,6 +3,7 @@ package redis.clients.johm;
 import org.junit.Test;
 
 import redis.clients.johm.collections.RedisList;
+import redis.clients.johm.collections.RedisMap;
 import redis.clients.johm.collections.RedisSet;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
@@ -14,13 +15,14 @@ public class CollectionsTest extends JOhmTestBase {
         assertNotNull(user.getLikes());
         assertTrue(user.getLikes().getClass().equals(RedisList.class));
         assertTrue(user.getPurchases().getClass().equals(RedisSet.class));
+        assertTrue(user.getFavoritePurchases().getClass()
+                .equals(RedisMap.class));
     }
 
     @Test
     public void persistList() {
         Item item = new Item();
         item.setName("Foo");
-        item.save();
 
         User user = new User();
         user.save();
@@ -41,7 +43,6 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistListAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Foo");
-        item1.save();
 
         User user = new User();
         user.save();
@@ -58,7 +59,6 @@ public class CollectionsTest extends JOhmTestBase {
 
         Item item2 = new Item();
         item2.setName("Bar");
-        item2.save();
         user.getLikes().add(item2);
 
         assertEquals(2, savedUser.getLikes().size());
@@ -79,21 +79,10 @@ public class CollectionsTest extends JOhmTestBase {
         assertEquals(item2.getName(), savedItem2.getName());
     }
 
-    @Test(expected = MissingIdException.class)
-    public void elementsInListShouldBePersisted() {
-        Item item = new Item();
-        item.setName("Foo");
-
-        User user = new User();
-        user.save();
-        user.getLikes().add(item);
-    }
-
     @Test
     public void persistSet() {
         Item item = new Item();
         item.setName("Bar");
-        item.save();
 
         User user = new User();
         user.save();
@@ -112,7 +101,6 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistSetAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Bar");
-        item1.save();
 
         User user = new User();
         user.save();
@@ -128,7 +116,6 @@ public class CollectionsTest extends JOhmTestBase {
 
         Item item2 = new Item();
         item2.setName("Bar");
-        item2.save();
         user.getPurchases().add(item2);
 
         assertEquals(2, savedUser.getPurchases().size());
@@ -144,13 +131,69 @@ public class CollectionsTest extends JOhmTestBase {
         assertEquals(item2.getName(), savedItem2.getName());
     }
 
-    @Test(expected = MissingIdException.class)
-    public void elementsInSetShouldBePersisted() {
-        Item item = new Item();
-        item.setName("Bar");
+    @Test
+    public void persistMap() {
+        Item item1 = new Item();
+        item1.setName("Bar1");
+        Item item2 = new Item();
+        item1.setName("Bar2");
 
         User user = new User();
         user.save();
-        user.getPurchases().add(item);
+        user.getFavoritePurchases().put(1, item2);
+        user.getFavoritePurchases().put(2, item1);
+
+        User savedUser = JOhm.get(User.class, user.getId());
+        assertEquals(2, savedUser.getFavoritePurchases().size());
+
+        Item faveItem1 = savedUser.getFavoritePurchases().get(1);
+        assertNotNull(faveItem1);
+        assertEquals(item2.getId(), faveItem1.getId());
+        assertEquals(item2.getName(), faveItem1.getName());
+
+        Item faveItem2 = savedUser.getFavoritePurchases().get(2);
+        assertNotNull(faveItem2);
+        assertEquals(item1.getId(), faveItem2.getId());
+        assertEquals(item1.getName(), faveItem2.getName());
+    }
+
+    @Test
+    public void persistMapAndCheckModifications() {
+        Item item1 = new Item();
+        item1.setName("Bar1");
+        Item item2 = new Item();
+        item1.setName("Bar2");
+
+        User user = new User();
+        user.save();
+        user.getFavoritePurchases().put(1, item2);
+        user.getFavoritePurchases().put(2, item1);
+
+        User savedUser = JOhm.get(User.class, user.getId());
+        assertEquals(2, savedUser.getFavoritePurchases().size());
+
+        Item faveItem1 = savedUser.getFavoritePurchases().get(1);
+        assertNotNull(faveItem1);
+        assertEquals(item2.getId(), faveItem1.getId());
+        assertEquals(item2.getName(), faveItem1.getName());
+
+        Item faveItem2 = savedUser.getFavoritePurchases().get(2);
+        assertNotNull(faveItem2);
+        assertEquals(item1.getId(), faveItem2.getId());
+        assertEquals(item1.getName(), faveItem2.getName());
+
+        savedUser.getFavoritePurchases().clear();
+        assertEquals(0, savedUser.getFavoritePurchases().size());
+
+        user.getFavoritePurchases().put(1, item2);
+        user.getFavoritePurchases().put(2, item1);
+        assertEquals(2, savedUser.getFavoritePurchases().size());
+
+        savedUser.getFavoritePurchases().remove(new Integer(1));
+        assertEquals(1, savedUser.getFavoritePurchases().size());
+        faveItem2 = savedUser.getFavoritePurchases().get(2);
+        assertNotNull(faveItem2);
+        assertEquals(item1.getId(), faveItem2.getId());
+        assertEquals(item1.getName(), faveItem2.getName());
     }
 }

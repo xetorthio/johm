@@ -5,14 +5,15 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-final class JOhmUtils {
+public final class JOhmUtils {
     static String getReferenceKeyName(final Field field) {
         return field.getName() + "_id";
     }
 
-    static boolean isNullOrEmpty(Object obj) {
+    public static boolean isNullOrEmpty(Object obj) {
         if (obj == null) {
             return true;
         }
@@ -23,9 +24,12 @@ final class JOhmUtils {
         return false;
     }
 
-    final static class Convertor {
+    public final static class Convertor {
         static Object convert(final Field field, final String value) {
-            Class<?> type = field.getType();
+            return convert(field.getType(), value);
+        }
+
+        public static Object convert(final Class<?> type, final String value) {
             if (type.equals(Byte.class) || type.equals(byte.class)) {
                 return new Byte(value);
             }
@@ -102,7 +106,7 @@ final class JOhmUtils {
         }
 
         static void checkValidCollection(final Field field) {
-            boolean isList = false, isSet = false;
+            boolean isList = false, isSet = false, isMap = false;
             if (field.isAnnotationPresent(CollectionList.class)) {
                 checkValidCollectionList(field);
                 isList = true;
@@ -111,9 +115,14 @@ final class JOhmUtils {
                 checkValidCollectionSet(field);
                 isSet = true;
             }
-            if (isList && isSet) {
-                throw new JOhmException(field.getName()
-                        + " is invalidly declared both a List and a Set");
+            if (field.isAnnotationPresent(CollectionMap.class)) {
+                checkValidCollectionMap(field);
+                isMap = true;
+            }
+            if (isList && isSet && isMap) {
+                throw new JOhmException(
+                        field.getName()
+                                + " can be declared a List or a Set or a Map but not more than one type");
             }
         }
 
@@ -128,6 +137,13 @@ final class JOhmUtils {
             if (!field.getType().getClass().isInstance(Set.class)) {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a subclass of Set");
+            }
+        }
+
+        static void checkValidCollectionMap(final Field field) {
+            if (!field.getType().getClass().isInstance(Map.class)) {
+                throw new JOhmException(field.getType().getSimpleName()
+                        + " is not a subclass of Map");
             }
         }
 
