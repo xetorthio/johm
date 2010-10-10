@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import redis.clients.johm.JOhm;
+import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Model;
 import redis.clients.johm.Nest;
 
@@ -17,7 +18,8 @@ import redis.clients.johm.Nest;
  * staleness but does so without any locking and is not thread-safe. Only add
  * and remove operations trigger a remote-sync of local internal storage.
  */
-public class RedisList<T extends Model> implements java.util.List<T> {
+public class RedisList<T extends Model> extends RedisBaseCollection implements
+        java.util.List<T> {
     private Nest nest;
     private Class<? extends Model> clazz;
     private final List<T> elements;
@@ -28,83 +30,103 @@ public class RedisList<T extends Model> implements java.util.List<T> {
         elements = new ArrayList<T>();
     }
 
+    @Override
     public boolean add(T e) {
         return internalAdd(e, true);
     }
 
+    @Override
     public void add(int index, T element) {
         internalIndexedAdd(index, element, true);
     }
 
+    @Override
     public boolean addAll(Collection<? extends T> c) {
         boolean success = true;
         for (T element : c) {
             success &= internalAdd(element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return success;
     }
 
+    @Override
     public boolean addAll(int index, Collection<? extends T> c) {
         for (T element : c) {
             internalIndexedAdd(index++, element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return true;
     }
 
+    @Override
     public void clear() {
         nest.del();
-        refreshStorage();
+        refreshStorage(true);
     }
 
+    @Override
     public boolean contains(Object o) {
         return scrollElements().contains(o);
     }
 
+    @Override
     public boolean containsAll(Collection<?> c) {
         return scrollElements().containsAll(c);
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     public T get(int index) {
+        T element = null;
         String id = nest.lindex(index);
-        return (T) JOhm.get(clazz, Integer.valueOf(id));
+        if (!JOhmUtils.isNullOrEmpty(id)) {
+            element = JOhm.get(clazz, Integer.valueOf(id));
+        }
+        return element;
     }
 
+    @Override
     public int indexOf(Object o) {
         return scrollElements().indexOf(o);
     }
 
+    @Override
     public boolean isEmpty() {
         return this.size() == 0;
     }
 
+    @Override
     public Iterator<T> iterator() {
         return scrollElements().iterator();
     }
 
+    @Override
     public int lastIndexOf(Object o) {
         return scrollElements().lastIndexOf(o);
     }
 
+    @Override
     public ListIterator<T> listIterator() {
         return scrollElements().listIterator();
     }
 
+    @Override
     public ListIterator<T> listIterator(int index) {
         return scrollElements().listIterator(index);
     }
 
+    @Override
     public boolean remove(Object o) {
         return internalRemove(o, true);
     }
 
+    @Override
     public T remove(int index) {
         return internalIndexedRemove(index, true);
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public boolean removeAll(Collection<?> c) {
         boolean success = true;
         Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
@@ -113,11 +135,12 @@ public class RedisList<T extends Model> implements java.util.List<T> {
             T element = (T) iterator.next();
             success &= internalRemove(element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return success;
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public boolean retainAll(Collection<?> c) {
         this.clear();
         Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
@@ -127,57 +150,65 @@ public class RedisList<T extends Model> implements java.util.List<T> {
             T element = (T) iterator.next();
             success &= internalAdd(element, false);
         }
-        refreshStorage();
+        refreshStorage(true);
         return success;
     }
 
+    @Override
     public T set(int index, T element) {
         T previousElement = this.get(index);
         internalIndexedAdd(index, element, true);
         return previousElement;
     }
 
+    @Override
     public int size() {
         int repoSize = nest.llen();
         if (repoSize != elements.size()) {
-            refreshStorage();
+            refreshStorage(true);
         }
         return repoSize;
     }
 
+    @Override
     public java.util.List<T> subList(int fromIndex, int toIndex) {
         return scrollElements().subList(fromIndex, toIndex);
     }
 
+    @Override
     public Object[] toArray() {
         return scrollElements().toArray();
     }
 
     @SuppressWarnings("hiding")
+    @Override
     public <T> T[] toArray(T[] a) {
         return scrollElements().toArray(a);
     }
 
-    private boolean internalAdd(T e, boolean refreshStorage) {
-        boolean success = nest.rpush(e.getId().toString()) > 0;
+    private boolean internalAdd(T element, boolean refreshStorage) {
+        element.save();
+        boolean success = nest.rpush(element.getId().toString()) > 0;
         if (refreshStorage) {
-            refreshStorage();
+            refreshStorage(true);
         }
         return success;
     }
 
     private void internalIndexedAdd(int index, T element, boolean refreshStorage) {
+        element.save();
         nest.lset(index, element.getId().toString());
         if (refreshStorage) {
-            refreshStorage();
+            refreshStorage(true);
         }
     }
 
     private boolean internalRemove(Object o, boolean refreshStorage) {
         Model element = (Model) o;
         Integer lrem = nest.lrem(1, element.getId().toString());
+        element.delete();
         if (refreshStorage) {
-            refreshStorage();
+            refreshStorage(true);
         }
         return lrem > 0;
     }
@@ -188,7 +219,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
         return element;
     }
 
-    private synchronized void refreshStorage() {
+    protected synchronized void purgeScrollStorage() {
         elements.clear();
         scrollElements();
     }

@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import redis.clients.johm.collections.RedisList;
+import redis.clients.johm.collections.RedisMap;
 import redis.clients.johm.collections.RedisSet;
 
 /**
@@ -35,6 +36,15 @@ public class Model extends JOhm {
                             .getAnnotation(CollectionSet.class);
                     RedisSet set = new RedisSet<Model>(annotation.of(), n);
                     field.set(this, set);
+                }
+                if (field.isAnnotationPresent(CollectionMap.class)) {
+                    JOhmUtils.Validator.checkValidCollection(field);
+                    Nest n = nest.cat(field.getName()).fork();
+                    CollectionMap annotation = field
+                            .getAnnotation(CollectionMap.class);
+                    RedisMap map = new RedisMap<Object, Model>(
+                            annotation.key(), annotation.value(), n);
+                    field.set(this, map);
                 }
             } catch (IllegalArgumentException e) {
                 throw new InvalidFieldException();
@@ -109,6 +119,31 @@ public class Model extends JOhm {
             throw new MissingIdException();
         }
         return id;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void switchOffAsyncCollections() {
+        for (Field field : this.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            try {
+                if (field.isAnnotationPresent(CollectionList.class)) {
+                    RedisList list = (RedisList) field.get(this);
+                    list.switchOffAsynchrony();
+                }
+                if (field.isAnnotationPresent(CollectionSet.class)) {
+                    RedisSet set = (RedisSet) field.get(this);
+                    set.switchOffAsynchrony();
+                }
+                if (field.isAnnotationPresent(CollectionMap.class)) {
+                    RedisMap map = (RedisMap) field.get(this);
+                    map.switchOffAsynchrony();
+                }
+            } catch (IllegalArgumentException e) {
+                throw new InvalidFieldException();
+            } catch (IllegalAccessException e) {
+                throw new InvalidFieldException();
+            }
+        }
     }
 
     /**

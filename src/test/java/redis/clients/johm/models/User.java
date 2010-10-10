@@ -1,10 +1,12 @@
 package redis.clients.johm.models;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import redis.clients.johm.Attribute;
 import redis.clients.johm.CollectionList;
+import redis.clients.johm.CollectionMap;
 import redis.clients.johm.CollectionSet;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
@@ -28,6 +30,8 @@ public class User extends Model {
     private List<Item> likes;
     @CollectionSet(of = Item.class)
     private Set<Item> purchases;
+    @CollectionMap(key = Integer.class, value = Item.class)
+    private Map<Integer, Item> favoritePurchases;
 
     public List<Item> getLikes() {
         return likes;
@@ -35,6 +39,10 @@ public class User extends Model {
 
     public Set<Item> getPurchases() {
         return purchases;
+    }
+
+    public Map<Integer, Item> getFavoritePurchases() {
+        return favoritePurchases;
     }
 
     public Country getCountry() {

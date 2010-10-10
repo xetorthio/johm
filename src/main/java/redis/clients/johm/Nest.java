@@ -117,6 +117,34 @@ public class Nest {
         return hgetAll;
     }
 
+    public String hget(String field) {
+        Jedis jedis = getResource();
+        String value = jedis.hget(key(), field);
+        jedisPool.returnResource(jedis);
+        return value;
+    }
+
+    public Integer hdel(String field) {
+        Jedis jedis = getResource();
+        Integer hdel = jedis.hdel(key(), field);
+        jedisPool.returnResource(jedis);
+        return hdel;
+    }
+
+    public Integer hlen() {
+        Jedis jedis = getResource();
+        Integer hlen = jedis.hlen(key());
+        jedisPool.returnResource(jedis);
+        return hlen;
+    }
+
+    public List<String> hkeys() {
+        Jedis jedis = getResource();
+        List<String> hkeys = jedis.hkeys(key());
+        jedisPool.returnResource(jedis);
+        return hkeys;
+    }
+
     public Integer exists() {
         Jedis jedis = getResource();
         Integer exists = jedis.exists(key());
@@ -130,7 +158,7 @@ public class Nest {
         jedisPool.returnResource(jedis);
         return reply;
     }
-    
+
     public Integer srem(String member) {
         Jedis jedis = getResource();
         Integer reply = jedis.srem(key(), member);
