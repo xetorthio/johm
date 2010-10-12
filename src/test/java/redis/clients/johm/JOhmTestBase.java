@@ -13,9 +13,17 @@ public class JOhmTestBase extends Assert {
 
     @Before
     public void startUp() throws TimeoutException {
-        jedisPool = new JedisPool("localhost", 6379, 200);
+        startJedisEngine();
+    }
+
+    protected static void startJedisEngine() throws TimeoutException {
+        jedisPool = new JedisPool("localhost", 6379, 2000);
         jedisPool.init();
         JOhm.setPool(jedisPool);
+        purgeRedis();
+    }
+
+    protected static void purgeRedis() throws TimeoutException {
         Jedis jedis = jedisPool.getResource();
         jedis.flushAll();
         jedisPool.returnResource(jedis);
