@@ -17,8 +17,6 @@ public class Nest {
     private StringBuilder sb;
     private String key;
     private static JedisPool jedisPool;
-    private static volatile boolean reuseConnectionMode;
-    private static Jedis cachedConnection;
 
     public static void setJedisPool(JedisPool jedisPool) {
         Nest.jedisPool = jedisPool;
@@ -42,23 +40,6 @@ public class Nest {
 
     public Nest(JOhm jOhm) {
         this.key = jOhm.getClass().getSimpleName();
-    }
-
-    public static boolean isReuseConnectionMode() {
-        return reuseConnectionMode;
-    }
-
-    public static synchronized void setReuseConnectionMode(
-            boolean reuseConnectionMode) {
-        Nest.reuseConnectionMode = reuseConnectionMode;
-        if (!reuseConnectionMode) {
-            if (cachedConnection != null) {
-                if (jedisPool != null) {
-                    returnResource(cachedConnection);
-                }
-                cachedConnection = null;
-            }
-        }
     }
 
     public String key() {
@@ -250,21 +231,12 @@ public class Nest {
     }
 
     private static void returnResource(final Jedis jedis) {
-        if (!reuseConnectionMode) {
-            jedisPool.returnResource(jedis);
-        }
+        jedisPool.returnResource(jedis);
     }
 
     private static Jedis getResource() {
         Jedis jedis;
-        if (reuseConnectionMode) {
-            if (cachedConnection == null) {
-                cachedConnection = getJedisHandle();
-            }
-            jedis = cachedConnection;
-        } else {
-            jedis = getJedisHandle();
-        }
+        jedis = getJedisHandle();
         return jedis;
     }
 

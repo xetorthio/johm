@@ -215,26 +215,6 @@ public class JOhm {
         Nest.setJedisPool(jedisPool);
     }
 
-    /**
-     * If this is set to true, it results in JOhm performing remote operations
-     * using the same cached remote connection. This mode will likely result in
-     * significant speed-up for bulk-operations but users need to exercise
-     * caution while using this.
-     * 
-     * A recommended usage pattern is:<br>
-     * setReuseConnectionMode(true);<br>
-     * ....do a bunch of operations<br>
-     * setReuseConnectionMode(false);
-     * 
-     * @param reuseCachedConnection
-     */
-    public static void setReuseConnectionMode(boolean reuseCachedConnection) {
-        Nest.setReuseConnectionMode(reuseCachedConnection);
-    }
-
-    public static boolean isReuseConnectionMode() {
-        return Nest.isReuseConnectionMode();
-    }
 
     protected JOhm() {
         nest = new Nest(this);

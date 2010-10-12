@@ -20,21 +20,4 @@ public class SaveGetBenchmark extends JOhmBenchmarkTestBase {
         timer.end();
         printStats("saveGetModel", totalOps, 2, timer.elapsed());
     }
-
-    @Test
-    public void saveGetModelReuseConnection() {
-        int totalOps = 5000;
-        JOhm.setReuseConnectionMode(true);
-        timer.begin();
-        for (int n = 0; n <= totalOps; n++) {
-            User user = new User();
-            user.setName("foo" + n);
-            user.setRoom("vroom" + n);
-            user.save();
-            JOhm.get(User.class, user.getId());
-        }
-        timer.end();
-        printStats("saveGetModelReuseConnection", totalOps, 2, timer.elapsed());
-        JOhm.setReuseConnectionMode(false);
-    }
 }
