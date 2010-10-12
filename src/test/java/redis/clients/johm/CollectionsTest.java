@@ -23,6 +23,7 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistList() {
         Item item = new Item();
         item.setName("Foo");
+        item.save();
 
         User user = new User();
         user.save();
@@ -43,6 +44,7 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistListAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Foo");
+        item1.save();
 
         User user = new User();
         user.save();
@@ -59,6 +61,8 @@ public class CollectionsTest extends JOhmTestBase {
 
         Item item2 = new Item();
         item2.setName("Bar");
+        item2.save();
+
         user.getLikes().add(item2);
 
         assertEquals(2, savedUser.getLikes().size());
@@ -83,6 +87,7 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistSet() {
         Item item = new Item();
         item.setName("Bar");
+        item.save();
 
         User user = new User();
         user.save();
@@ -101,6 +106,7 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistSetAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Bar");
+        item1.save();
 
         User user = new User();
         user.save();
@@ -116,6 +122,8 @@ public class CollectionsTest extends JOhmTestBase {
 
         Item item2 = new Item();
         item2.setName("Bar");
+        item2.save();
+
         user.getPurchases().add(item2);
 
         assertEquals(2, savedUser.getPurchases().size());
@@ -135,8 +143,11 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistMap() {
         Item item1 = new Item();
         item1.setName("Bar1");
+        item1.save();
+
         Item item2 = new Item();
-        item1.setName("Bar2");
+        item2.setName("Bar2");
+        item2.save();
 
         User user = new User();
         user.save();
@@ -161,8 +172,11 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistMapAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Bar1");
+        item1.save();
+
         Item item2 = new Item();
-        item1.setName("Bar2");
+        item2.setName("Bar2");
+        item2.save();
 
         User user = new User();
         user.save();

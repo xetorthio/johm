@@ -121,31 +121,6 @@ public class Model extends JOhm {
         return id;
     }
 
-    @SuppressWarnings("unchecked")
-    public void switchOffAsyncCollections() {
-        for (Field field : this.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            try {
-                if (field.isAnnotationPresent(CollectionList.class)) {
-                    RedisList list = (RedisList) field.get(this);
-                    list.switchOffAsynchrony();
-                }
-                if (field.isAnnotationPresent(CollectionSet.class)) {
-                    RedisSet set = (RedisSet) field.get(this);
-                    set.switchOffAsynchrony();
-                }
-                if (field.isAnnotationPresent(CollectionMap.class)) {
-                    RedisMap map = (RedisMap) field.get(this);
-                    map.switchOffAsynchrony();
-                }
-            } catch (IllegalArgumentException e) {
-                throw new InvalidFieldException();
-            } catch (IllegalAccessException e) {
-                throw new InvalidFieldException();
-            }
-        }
-    }
-
     /**
      * Indicate if the model is new
      * 

@@ -18,51 +18,45 @@ import redis.clients.johm.Nest;
  * staleness but does so without any locking and is not thread-safe. Only add
  * and remove operations trigger a remote-sync of local internal storage.
  */
-public class RedisList<T extends Model> extends RedisBaseCollection implements
-        java.util.List<T> {
+public class RedisList<T extends Model> implements java.util.List<T> {
     private Nest nest;
     private Class<? extends Model> clazz;
-    private final List<T> elements;
 
     public RedisList(Class<? extends Model> clazz, Nest nest) {
         this.clazz = clazz;
         this.nest = nest;
-        elements = new ArrayList<T>();
     }
 
     @Override
     public boolean add(T e) {
-        return internalAdd(e, true);
+        return internalAdd(e);
     }
 
     @Override
     public void add(int index, T element) {
-        internalIndexedAdd(index, element, true);
+        internalIndexedAdd(index, element);
     }
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
         boolean success = true;
         for (T element : c) {
-            success &= internalAdd(element, false);
+            success &= internalAdd(element);
         }
-        refreshStorage(true);
         return success;
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
         for (T element : c) {
-            internalIndexedAdd(index++, element, false);
+            internalIndexedAdd(index++, element);
         }
-        refreshStorage(true);
         return true;
     }
 
     @Override
     public void clear() {
         nest.del();
-        refreshStorage(true);
     }
 
     @Override
@@ -117,12 +111,12 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
 
     @Override
     public boolean remove(Object o) {
-        return internalRemove(o, true);
+        return internalRemove(o);
     }
 
     @Override
     public T remove(int index) {
-        return internalIndexedRemove(index, true);
+        return internalIndexedRemove(index);
     }
 
     @SuppressWarnings("unchecked")
@@ -133,9 +127,8 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
                 .iterator();
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
-            success &= internalRemove(element, false);
+            success &= internalRemove(element);
         }
-        refreshStorage(true);
         return success;
     }
 
@@ -148,25 +141,21 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
-            success &= internalAdd(element, false);
+            success &= internalAdd(element);
         }
-        refreshStorage(true);
         return success;
     }
 
     @Override
     public T set(int index, T element) {
         T previousElement = this.get(index);
-        internalIndexedAdd(index, element, true);
+        internalIndexedAdd(index, element);
         return previousElement;
     }
 
     @Override
     public int size() {
         int repoSize = nest.llen();
-        if (repoSize != elements.size()) {
-            refreshStorage(true);
-        }
         return repoSize;
     }
 
@@ -186,51 +175,34 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
         return scrollElements().toArray(a);
     }
 
-    private boolean internalAdd(T element, boolean refreshStorage) {
-        element.save();
+    private boolean internalAdd(T element) {
         boolean success = nest.rpush(element.getId().toString()) > 0;
-        if (refreshStorage) {
-            refreshStorage(true);
-        }
         return success;
     }
 
-    private void internalIndexedAdd(int index, T element, boolean refreshStorage) {
-        element.save();
+    private void internalIndexedAdd(int index, T element) {
         nest.lset(index, element.getId().toString());
-        if (refreshStorage) {
-            refreshStorage(true);
-        }
     }
 
-    private boolean internalRemove(Object o, boolean refreshStorage) {
+    private boolean internalRemove(Object o) {
         Model element = (Model) o;
         Integer lrem = nest.lrem(1, element.getId().toString());
-        element.delete();
-        if (refreshStorage) {
-            refreshStorage(true);
-        }
         return lrem > 0;
     }
 
-    private T internalIndexedRemove(int index, boolean refreshStorage) {
+    private T internalIndexedRemove(int index) {
         T element = this.get(index);
-        internalRemove(element, refreshStorage);
+        internalRemove(element);
         return element;
-    }
-
-    protected synchronized void purgeScrollStorage() {
-        elements.clear();
-        scrollElements();
     }
 
     @SuppressWarnings("unchecked")
     private synchronized List<T> scrollElements() {
-        if (elements.isEmpty()) {
-            List<String> ids = nest.lrange(0, -1);
-            for (String id : ids) {
-                elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
-            }
+        List<T> elements = new ArrayList<T>();
+
+        List<String> ids = nest.lrange(0, -1);
+        for (String id : ids) {
+            elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
         }
         return elements;
     }
