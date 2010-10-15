@@ -185,16 +185,6 @@ public final class JOhmUtils {
             if (isReference) {
                 checkValidReference(field);
             }
-            if (isIndexed) {
-                if (isAttribute) {
-                    return;
-                }
-                if (isReference) {
-                    // Revisit this in the future
-                    throw new UnsupportedOperationException(
-                            "Reference indexing is not yet supported");
-                }
-            }
         }
     }
 }

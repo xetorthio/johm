@@ -26,6 +26,7 @@ public class User extends Model {
     @Attribute
     private char initial;
     @Reference
+    @Indexed
     private Country country;
     @CollectionList(of = Item.class)
     @Indexed

@@ -76,6 +76,9 @@ public class JOhm {
             if (!field.isAnnotationPresent(Indexed.class)) {
                 throw new InvalidFieldException();
             }
+            if (field.isAnnotationPresent(Reference.class)) {
+                attributeName = JOhmUtils.getReferenceKeyName(field);
+            }
         } catch (SecurityException e) {
             throw new InvalidFieldException();
         } catch (NoSuchFieldException e) {
@@ -145,6 +148,10 @@ public class JOhm {
                 }
                 if (field.isAnnotationPresent(Indexed.class)) {
                     Object fieldValue = field.get(model);
+                    if (fieldValue != null
+                            && field.isAnnotationPresent(Reference.class)) {
+                        fieldValue = ((Model) fieldValue).getId();
+                    }
                     if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
                         model.nest.cat(fieldName).cat(fieldValue).sadd(
                                 String.valueOf(model.getId()));

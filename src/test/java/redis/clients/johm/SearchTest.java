@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import redis.clients.johm.models.Country;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
@@ -188,6 +189,27 @@ public class SearchTest extends JOhmTestBase {
 
         List<User> users = JOhm.find(User.class, "favoritePurchases", item
                 .getId());
+
+        assertEquals(2, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+        assertEquals(user2.getId(), users.get(1).getId());
+    }
+
+    @Test
+    public void canSearchOnReferences() {
+        Country somewhere = new Country();
+        somewhere.setName("somewhere");
+        somewhere.save();
+
+        User user1 = new User();
+        user1.setCountry(somewhere);
+        user1.save();
+
+        User user2 = new User();
+        user2.setCountry(somewhere);
+        user2.save();
+
+        List<User> users = JOhm.find(User.class, "country", somewhere.getId());
 
         assertEquals(2, users.size());
         assertEquals(user1.getId(), users.get(0).getId());
