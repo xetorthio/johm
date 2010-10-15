@@ -9,12 +9,11 @@ Right now it is still in development. So just the following features are availab
 
 - Basic attribute persistence (String, Integer, etc...)
 - Auto-numeric Ids
-- Simple References
+- References
 - Indexes
-- Simple finders (on just one attribute)
 - Deletion
-- List relationship
-- Set relationship
+- List, Set, SortedSet and Map relationship
+- Search on attributes, collections and references
 
 Stay close! It is growing pretty fast!
 
