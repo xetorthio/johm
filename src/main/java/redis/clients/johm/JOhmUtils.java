@@ -17,8 +17,12 @@ public final class JOhmUtils {
         if (obj == null) {
             return true;
         }
-        if (obj.toString().trim().length() == 0) {
-            return true;
+        if (obj.getClass().equals(Collection.class)) {
+            return ((Collection) obj).size() == 0;
+        } else {
+            if (obj.toString().trim().length() == 0) {
+                return true;
+            }
         }
 
         return false;
@@ -190,8 +194,6 @@ public final class JOhmUtils {
                     throw new UnsupportedOperationException(
                             "Reference indexing is not yet supported");
                 }
-                throw new UnsupportedOperationException(
-                        "Indexing is not supported for unpersisted fields");
             }
         }
     }

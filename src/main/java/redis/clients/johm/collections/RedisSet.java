@@ -1,10 +1,12 @@
 package redis.clients.johm.collections;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.Model;
 import redis.clients.johm.Nest;
@@ -20,15 +22,35 @@ import redis.clients.johm.Nest;
 public class RedisSet<T extends Model> implements Set<T> {
     private final Nest nest;
     private final Class<? extends Model> clazz;
+    private Model owner;
+    private Field field;
 
-    public RedisSet(final Class<? extends Model> clazz, final Nest nest) {
+    public RedisSet(final Class<? extends Model> clazz, final Nest nest,
+            Field field, Model owner) {
         this.clazz = clazz;
         this.nest = nest;
+        this.field = field;
+        this.owner = owner;
+    }
+
+    private void indexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element.getId()).sadd(
+                    owner.getId().toString());
+        }
+    }
+
+    private void unindexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element.getId()).srem(
+                    owner.getId().toString());
+        }
     }
 
     @Override
     public int size() {
-        int repoSize = nest.smembers().size();
+        int repoSize = nest.cat(owner.getId()).cat(field.getName()).smembers()
+                .size();
         return repoSize;
     }
 
@@ -63,9 +85,10 @@ public class RedisSet<T extends Model> implements Set<T> {
         return internalAdd(element);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-        return internalRemove(o);
+        return internalRemove((T) o);
     }
 
     @Override
@@ -111,23 +134,27 @@ public class RedisSet<T extends Model> implements Set<T> {
 
     @Override
     public void clear() {
-        nest.del();
+        nest.cat(owner.getId()).cat(field.getName()).del();
     }
 
     private boolean internalAdd(T element) {
-        boolean success = nest.sadd(element.getId().toString()) > 0;
+        boolean success = nest.cat(owner.getId()).cat(field.getName()).sadd(
+                element.getId().toString()) > 0;
+        indexValue(element);
         return success;
     }
 
-    private boolean internalRemove(Object o) {
-        Model element = Model.class.cast(o);
-        boolean success = nest.srem(element.getId().toString()) > 0;
+    private boolean internalRemove(T element) {
+        boolean success = nest.cat(owner.getId()).cat(field.getName()).srem(
+                element.getId().toString()) > 0;
+        unindexValue(element);
         return success;
     }
 
     @SuppressWarnings("unchecked")
     private synchronized Set<T> scrollElements() {
-        Set<String> ids = nest.smembers();
+        Set<String> ids = nest.cat(owner.getId()).cat(field.getName())
+                .smembers();
         Set<T> elements = new HashSet<T>();
         for (String id : ids) {
             elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));

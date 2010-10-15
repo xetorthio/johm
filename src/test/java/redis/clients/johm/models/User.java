@@ -28,12 +28,16 @@ public class User extends Model {
     @Reference
     private Country country;
     @CollectionList(of = Item.class)
+    @Indexed
     private List<Item> likes;
     @CollectionSet(of = Item.class)
+    @Indexed
     private Set<Item> purchases;
     @CollectionMap(key = Integer.class, value = Item.class)
+    @Indexed
     private Map<Integer, Item> favoritePurchases;
     @CollectionSortedSet(of = Item.class, by = "price")
+    @Indexed
     private Set<Item> orderedPurchases;
 
     public List<Item> getLikes() {

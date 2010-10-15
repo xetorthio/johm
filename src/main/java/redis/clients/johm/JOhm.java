@@ -119,34 +119,35 @@ public class JOhm {
             fields.addAll(Arrays.asList(model.getClass().getSuperclass()
                     .getDeclaredFields()));
 
-            String fieldName = null, fieldValue = null;
+            String fieldName = null;
             for (Field field : fields) {
+                field.setAccessible(true);
                 JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
                 if (field.isAnnotationPresent(Attribute.class)) {
-                    field.setAccessible(true);
                     fieldName = field.getName();
                     Object fieldValueObject = field.get(model);
                     if (fieldValueObject != null) {
-                        fieldValue = fieldValueObject.toString();
-                        hashedObject.put(fieldName, fieldValue);
+                        hashedObject
+                                .put(fieldName, fieldValueObject.toString());
                     }
-                    if (field.isAnnotationPresent(Indexed.class)) {
-                        if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
-                            model.nest.cat(fieldName).cat(fieldValue).sadd(
-                                    String.valueOf(model.getId()));
-                        }
-                    }
+
                 }
                 if (field.isAnnotationPresent(Reference.class)) {
-                    field.setAccessible(true);
                     fieldName = JOhmUtils.getReferenceKeyName(field);
                     Model child = Model.class.cast(field.get(model));
                     if (child != null) {
                         if (saveChildren) {
                             save(child, saveChildren); // some more work to do
                         }
-                        fieldValue = String.valueOf(child.getId());
-                        hashedObject.put(fieldName, fieldValue);
+                        hashedObject.put(fieldName, String.valueOf(child
+                                .getId()));
+                    }
+                }
+                if (field.isAnnotationPresent(Indexed.class)) {
+                    Object fieldValue = field.get(model);
+                    if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
+                        model.nest.cat(fieldName).cat(fieldValue).sadd(
+                                String.valueOf(model.getId()));
                     }
                 }
             }
@@ -214,7 +215,6 @@ public class JOhm {
     public static void setPool(JedisPool jedisPool) {
         Nest.setJedisPool(jedisPool);
     }
-
 
     protected JOhm() {
         nest = new Nest(this);

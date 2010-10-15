@@ -1,11 +1,13 @@
 package redis.clients.johm.collections;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Model;
@@ -21,10 +23,15 @@ import redis.clients.johm.Nest;
 public class RedisList<T extends Model> implements java.util.List<T> {
     private Nest nest;
     private Class<? extends Model> clazz;
+    private Field field;
+    private Model owner;
 
-    public RedisList(Class<? extends Model> clazz, Nest nest) {
+    public RedisList(Class<? extends Model> clazz, Nest nest, Field field,
+            Model owner) {
         this.clazz = clazz;
         this.nest = nest;
+        this.field = field;
+        this.owner = owner;
     }
 
     @Override
@@ -56,7 +63,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
 
     @Override
     public void clear() {
-        nest.del();
+        nest.cat(owner.getId()).cat(field.getName()).del();
     }
 
     @Override
@@ -72,7 +79,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     @Override
     public T get(int index) {
         T element = null;
-        String id = nest.lindex(index);
+        String id = nest.cat(owner.getId()).cat(field.getName()).lindex(index);
         if (!JOhmUtils.isNullOrEmpty(id)) {
             element = JOhm.get(clazz, Integer.valueOf(id));
         }
@@ -109,9 +116,10 @@ public class RedisList<T extends Model> implements java.util.List<T> {
         return scrollElements().listIterator(index);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-        return internalRemove(o);
+        return internalRemove((T) o);
     }
 
     @Override
@@ -155,7 +163,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
 
     @Override
     public int size() {
-        int repoSize = nest.llen();
+        int repoSize = nest.cat(owner.getId()).cat(field.getName()).llen();
         return repoSize;
     }
 
@@ -176,17 +184,36 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     }
 
     private boolean internalAdd(T element) {
-        boolean success = nest.rpush(element.getId().toString()) > 0;
+        boolean success = nest.cat(owner.getId()).cat(field.getName()).rpush(
+                element.getId().toString()) > 0;
+        indexValue(element);
         return success;
     }
 
-    private void internalIndexedAdd(int index, T element) {
-        nest.lset(index, element.getId().toString());
+    private void indexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element.getId()).sadd(
+                    owner.getId().toString());
+        }
     }
 
-    private boolean internalRemove(Object o) {
-        Model element = (Model) o;
-        Integer lrem = nest.lrem(1, element.getId().toString());
+    private void unindexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element.getId()).srem(
+                    owner.getId().toString());
+        }
+    }
+
+    private void internalIndexedAdd(int index, T element) {
+        nest.cat(owner.getId()).cat(field.getName()).lset(index,
+                element.getId().toString());
+        indexValue(element);
+    }
+
+    private boolean internalRemove(T element) {
+        Integer lrem = nest.cat(owner.getId()).cat(field.getName()).lrem(1,
+                element.getId().toString());
+        unindexValue(element);
         return lrem > 0;
     }
 
@@ -200,7 +227,8 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     private synchronized List<T> scrollElements() {
         List<T> elements = new ArrayList<T>();
 
-        List<String> ids = nest.lrange(0, -1);
+        List<String> ids = nest.cat(owner.getId()).cat(field.getName()).lrange(
+                0, -1);
         for (String id : ids) {
             elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
         }

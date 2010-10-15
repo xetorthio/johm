@@ -24,36 +24,35 @@ public class Model extends JOhm {
             try {
                 if (field.isAnnotationPresent(CollectionList.class)) {
                     JOhmUtils.Validator.checkValidCollection(field);
-                    Nest n = nest.cat(field.getName()).fork();
                     CollectionList annotation = field
                             .getAnnotation(CollectionList.class);
-                    RedisList list = new RedisList<Model>(annotation.of(), n);
+                    RedisList list = new RedisList<Model>(annotation.of(),
+                            nest, field, this);
                     field.set(this, list);
                 }
                 if (field.isAnnotationPresent(CollectionSet.class)) {
                     JOhmUtils.Validator.checkValidCollection(field);
-                    Nest n = nest.cat(field.getName()).fork();
                     CollectionSet annotation = field
                             .getAnnotation(CollectionSet.class);
-                    RedisSet set = new RedisSet<Model>(annotation.of(), n);
+                    RedisSet set = new RedisSet<Model>(annotation.of(), nest,
+                            field, this);
                     field.set(this, set);
                 }
                 if (field.isAnnotationPresent(CollectionSortedSet.class)) {
                     JOhmUtils.Validator.checkValidCollection(field);
-                    Nest n = nest.cat(field.getName()).fork();
                     CollectionSortedSet annotation = field
                             .getAnnotation(CollectionSortedSet.class);
-                    RedisSortedSet set = new RedisSortedSet<Model>(annotation.of(),
-                            annotation.by(), n);
+                    RedisSortedSet set = new RedisSortedSet<Model>(annotation
+                            .of(), annotation.by(), nest, field, this);
                     field.set(this, set);
                 }
                 if (field.isAnnotationPresent(CollectionMap.class)) {
                     JOhmUtils.Validator.checkValidCollection(field);
-                    Nest n = nest.cat(field.getName()).fork();
                     CollectionMap annotation = field
                             .getAnnotation(CollectionMap.class);
                     RedisMap map = new RedisMap<Object, Model>(
-                            annotation.key(), annotation.value(), n);
+                            annotation.key(), annotation.value(), nest, field,
+                            this);
                     field.set(this, map);
                 }
             } catch (IllegalArgumentException e) {

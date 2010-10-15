@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmException;
 import redis.clients.johm.Model;
@@ -18,18 +19,23 @@ import redis.clients.johm.Nest;
 public class RedisSortedSet<T extends Model> implements Set<T> {
     private final Nest nest;
     private final Class<? extends Model> clazz;
-    private final String field;
+    private Field field;
+    private Model owner;
+    private String byFieldName;
 
-    public RedisSortedSet(final Class<? extends Model> clazz, String field,
-            final Nest nest) {
+    public RedisSortedSet(Class<? extends Model> clazz, String byField,
+            Nest nest, Field field, Model owner) {
         this.clazz = clazz;
         this.nest = nest;
         this.field = field;
+        this.owner = owner;
+        this.byFieldName = byField;
     }
 
     @SuppressWarnings("unchecked")
     private synchronized Set<T> scrollElements() {
-        Set<String> ids = nest.zrange(0, -1);
+        Set<String> ids = nest.cat(owner.getId()).cat(field.getName()).zrange(
+                0, -1);
         Set<T> elements = new LinkedHashSet<T>();
         for (String id : ids) {
             elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
@@ -37,31 +43,48 @@ public class RedisSortedSet<T extends Model> implements Set<T> {
         return elements;
     }
 
+    private void indexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element.getId()).sadd(
+                    owner.getId().toString());
+        }
+    }
+
+    private void unindexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element.getId()).srem(
+                    owner.getId().toString());
+        }
+    }
+
     private boolean internalAdd(T element) {
-        Field declaredField;
         boolean success = false;
         try {
-            declaredField = element.getClass().getDeclaredField(this.field);
-            declaredField.setAccessible(true);
-            Object fieldValue = declaredField.get(element);
-            success = nest.zadd(Float.class.cast(fieldValue), element.getId()
-                    .toString()) > 0;
-
+            Field byField = element.getClass().getDeclaredField(byFieldName);
+            byField.setAccessible(true);
+            Object fieldValue = byField.get(element);
+            if (fieldValue == null) {
+                fieldValue = 0f;
+            }
+            success = nest.cat(owner.getId()).cat(field.getName()).zadd(
+                    Float.class.cast(fieldValue), element.getId().toString()) > 0;
+            indexValue(element);
         } catch (SecurityException e) {
-            throw new JOhmException(e);
-        } catch (NoSuchFieldException e) {
             throw new JOhmException(e);
         } catch (IllegalArgumentException e) {
             throw new JOhmException(e);
         } catch (IllegalAccessException e) {
             throw new JOhmException(e);
+        } catch (NoSuchFieldException e) {
+            throw new JOhmException(e);
         }
         return success;
     }
 
-    private boolean internalRemove(Object o) {
-        Model element = Model.class.cast(o);
-        boolean success = nest.srem(element.getId().toString()) > 0;
+    private boolean internalRemove(T element) {
+        boolean success = nest.cat(owner.getId()).cat(field.getName()).srem(
+                element.getId().toString()) > 0;
+        unindexValue(element);
         return success;
     }
 
@@ -81,7 +104,7 @@ public class RedisSortedSet<T extends Model> implements Set<T> {
 
     @Override
     public void clear() {
-        nest.del();
+        nest.cat(owner.getId()).cat(field.getName()).del();
     }
 
     @Override
@@ -104,9 +127,10 @@ public class RedisSortedSet<T extends Model> implements Set<T> {
         return scrollElements().iterator();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-        return internalRemove(o);
+        return internalRemove((T) o);
     }
 
     @SuppressWarnings("unchecked")
@@ -139,7 +163,7 @@ public class RedisSortedSet<T extends Model> implements Set<T> {
 
     @Override
     public int size() {
-        int repoSize = nest.zcard();
+        int repoSize = nest.cat(owner.getId()).cat(field.getName()).zcard();
         return repoSize;
     }
 

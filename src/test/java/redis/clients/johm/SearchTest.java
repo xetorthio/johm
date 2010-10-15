@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
 public class SearchTest extends JOhmTestBase {
@@ -99,4 +100,97 @@ public class SearchTest extends JOhmTestBase {
         assertEquals(user4Found.getInitial(), user2.getInitial());
     }
 
+    @Test
+    public void canSearchOnLists() {
+        Item item = new Item();
+        item.setName("bar");
+        item.save();
+
+        User user1 = new User();
+        user1.setName("foo");
+        user1.save();
+        user1.getLikes().add(item);
+
+        User user2 = new User();
+        user2.setName("car");
+        user2.save();
+        user2.getLikes().add(item);
+
+        List<User> users = JOhm.find(User.class, "likes", item.getId());
+
+        assertEquals(2, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+        assertEquals(user2.getId(), users.get(1).getId());
+    }
+
+    @Test
+    public void canSearchOnSets() {
+        Item item = new Item();
+        item.setName("bar");
+        item.save();
+
+        User user1 = new User();
+        user1.setName("foo");
+        user1.save();
+        user1.getPurchases().add(item);
+
+        User user2 = new User();
+        user2.setName("car");
+        user2.save();
+        user2.getPurchases().add(item);
+
+        List<User> users = JOhm.find(User.class, "purchases", item.getId());
+
+        assertEquals(2, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+        assertEquals(user2.getId(), users.get(1).getId());
+    }
+
+    @Test
+    public void canSearchOnSortedSets() {
+        Item item = new Item();
+        item.setName("bar");
+        item.save();
+
+        User user1 = new User();
+        user1.setName("foo");
+        user1.save();
+        user1.getOrderedPurchases().add(item);
+
+        User user2 = new User();
+        user2.setName("car");
+        user2.save();
+        user2.getOrderedPurchases().add(item);
+
+        List<User> users = JOhm.find(User.class, "orderedPurchases", item
+                .getId());
+
+        assertEquals(2, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+        assertEquals(user2.getId(), users.get(1).getId());
+    }
+
+    @Test
+    public void canSearchOnMaps() {
+        Item item = new Item();
+        item.setName("bar");
+        item.save();
+
+        User user1 = new User();
+        user1.setName("foo");
+        user1.save();
+        user1.getFavoritePurchases().put(1, item);
+
+        User user2 = new User();
+        user2.setName("car");
+        user2.save();
+        user2.getFavoritePurchases().put(1, item);
+
+        List<User> users = JOhm.find(User.class, "favoritePurchases", item
+                .getId());
+
+        assertEquals(2, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+        assertEquals(user2.getId(), users.get(1).getId());
+    }
 }

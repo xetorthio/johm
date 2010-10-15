@@ -230,9 +230,10 @@ public class CollectionsTest extends JOhmTestBase {
 
         user.getOrderedPurchases().add(item1);
 
+        // don't set price so it also checks that a default score of 0 is
+        // assigned
         Item item2 = new Item();
         item2.setName("bar");
-        item2.setPrice(10.2f);
         item2.save();
 
         user.getOrderedPurchases().add(item2);
