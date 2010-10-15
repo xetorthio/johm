@@ -8,6 +8,7 @@ import redis.clients.johm.Attribute;
 import redis.clients.johm.CollectionList;
 import redis.clients.johm.CollectionMap;
 import redis.clients.johm.CollectionSet;
+import redis.clients.johm.CollectionSortedSet;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
@@ -32,6 +33,8 @@ public class User extends Model {
     private Set<Item> purchases;
     @CollectionMap(key = Integer.class, value = Item.class)
     private Map<Integer, Item> favoritePurchases;
+    @CollectionSortedSet(of = Item.class, by = "price")
+    private Set<Item> orderedPurchases;
 
     public List<Item> getLikes() {
         return likes;
@@ -39,6 +42,10 @@ public class User extends Model {
 
     public Set<Item> getPurchases() {
         return purchases;
+    }
+
+    public Set<Item> getOrderedPurchases() {
+        return orderedPurchases;
     }
 
     public Map<Integer, Item> getFavoritePurchases() {

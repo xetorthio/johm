@@ -52,7 +52,7 @@ public final class JOhmUtils {
             }
             if (type.equals(Float.class) || type.equals(float.class)) {
                 if (value == null) {
-                    return 0L;
+                    return 0f;
                 }
                 return new Float(value);
             }
@@ -106,7 +106,7 @@ public final class JOhmUtils {
         }
 
         static void checkValidCollection(final Field field) {
-            boolean isList = false, isSet = false, isMap = false;
+            boolean isList = false, isSet = false, isMap = false, isSortedSet = false;
             if (field.isAnnotationPresent(CollectionList.class)) {
                 checkValidCollectionList(field);
                 isList = true;
@@ -115,14 +115,18 @@ public final class JOhmUtils {
                 checkValidCollectionSet(field);
                 isSet = true;
             }
+            if (field.isAnnotationPresent(CollectionSortedSet.class)) {
+                checkValidCollectionSortedSet(field);
+                isSortedSet = true;
+            }
             if (field.isAnnotationPresent(CollectionMap.class)) {
                 checkValidCollectionMap(field);
                 isMap = true;
             }
-            if (isList && isSet && isMap) {
+            if (isList && isSet && isMap && isSortedSet) {
                 throw new JOhmException(
                         field.getName()
-                                + " can be declared a List or a Set or a Map but not more than one type");
+                                + " can be declared a List or a Set or a SortedSet or a Map but not more than one type");
             }
         }
 
@@ -134,6 +138,13 @@ public final class JOhmUtils {
         }
 
         static void checkValidCollectionSet(final Field field) {
+            if (!field.getType().getClass().isInstance(Set.class)) {
+                throw new JOhmException(field.getType().getSimpleName()
+                        + " is not a subclass of Set");
+            }
+        }
+
+        static void checkValidCollectionSortedSet(final Field field) {
             if (!field.getType().getClass().isInstance(Set.class)) {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a subclass of Set");

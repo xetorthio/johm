@@ -6,6 +6,16 @@ import redis.clients.johm.Model;
 public class Item extends Model {
     @Attribute
     private String name;
+    @Attribute
+    private Float price;
+
+    public Float getPrice() {
+        return price;
+    }
+
+    public void setPrice(Float price) {
+        this.price = price;
+    }
 
     public String getName() {
         return name;

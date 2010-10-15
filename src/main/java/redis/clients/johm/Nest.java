@@ -249,4 +249,25 @@ public class Nest {
         }
         return jedis;
     }
+
+    public Set<String> zrange(int start, int end) {
+        Jedis jedis = getResource();
+        Set<String> zrange = jedis.zrange(key(), start, end);
+        returnResource(jedis);
+        return zrange;
+    }
+
+    public Integer zadd(float score, String member) {
+        Jedis jedis = getResource();
+        Integer zadd = jedis.zadd(key(), score, member);
+        returnResource(jedis);
+        return zadd;
+    }
+
+    public Integer zcard() {
+        Jedis jedis = getResource();
+        Integer zadd = jedis.zcard(key());
+        returnResource(jedis);
+        return zadd;
+    }
 }

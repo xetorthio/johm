@@ -1,10 +1,13 @@
 package redis.clients.johm;
 
+import java.util.Iterator;
+
 import org.junit.Test;
 
 import redis.clients.johm.collections.RedisList;
 import redis.clients.johm.collections.RedisMap;
 import redis.clients.johm.collections.RedisSet;
+import redis.clients.johm.collections.RedisSortedSet;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
@@ -17,6 +20,9 @@ public class CollectionsTest extends JOhmTestBase {
         assertTrue(user.getPurchases().getClass().equals(RedisSet.class));
         assertTrue(user.getFavoritePurchases().getClass()
                 .equals(RedisMap.class));
+        assertTrue(user.getOrderedPurchases().getClass().equals(
+                RedisSortedSet.class));
+
     }
 
     @Test
@@ -209,5 +215,32 @@ public class CollectionsTest extends JOhmTestBase {
         assertNotNull(faveItem2);
         assertEquals(item1.getId(), faveItem2.getId());
         assertEquals(item1.getName(), faveItem2.getName());
+    }
+
+    @Test
+    public void persistSortedSets() {
+        User user = new User();
+        user.setName("foo");
+        user.save();
+
+        Item item1 = new Item();
+        item1.setName("bar");
+        item1.setPrice(18.2f);
+        item1.save();
+
+        user.getOrderedPurchases().add(item1);
+
+        Item item2 = new Item();
+        item2.setName("bar");
+        item2.setPrice(10.2f);
+        item2.save();
+
+        user.getOrderedPurchases().add(item2);
+
+        assertEquals(2, user.getOrderedPurchases().size());
+        Iterator<Item> iterator = user.getOrderedPurchases().iterator();
+
+        assertEquals(item2.getId(), iterator.next().getId());
+        assertEquals(item1.getId(), iterator.next().getId());
     }
 }

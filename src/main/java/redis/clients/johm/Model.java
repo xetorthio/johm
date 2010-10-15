@@ -6,6 +6,7 @@ import java.util.List;
 import redis.clients.johm.collections.RedisList;
 import redis.clients.johm.collections.RedisMap;
 import redis.clients.johm.collections.RedisSet;
+import redis.clients.johm.collections.RedisSortedSet;
 
 /**
  * JOhm's Model is the fundamental abstraction of a persistable entity in Redis.
@@ -35,6 +36,15 @@ public class Model extends JOhm {
                     CollectionSet annotation = field
                             .getAnnotation(CollectionSet.class);
                     RedisSet set = new RedisSet<Model>(annotation.of(), n);
+                    field.set(this, set);
+                }
+                if (field.isAnnotationPresent(CollectionSortedSet.class)) {
+                    JOhmUtils.Validator.checkValidCollection(field);
+                    Nest n = nest.cat(field.getName()).fork();
+                    CollectionSortedSet annotation = field
+                            .getAnnotation(CollectionSortedSet.class);
+                    RedisSortedSet set = new RedisSortedSet<Model>(annotation.of(),
+                            annotation.by(), n);
                     field.set(this, set);
                 }
                 if (field.isAnnotationPresent(CollectionMap.class)) {
