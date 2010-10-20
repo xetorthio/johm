@@ -1,14 +1,15 @@
 package redis.clients.johm.collections;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Model;
 import redis.clients.johm.Nest;
 
 /**
@@ -18,51 +19,50 @@ import redis.clients.johm.Nest;
  * staleness but does so without any locking and is not thread-safe. Only add
  * and remove operations trigger a remote-sync of local internal storage.
  */
-public class RedisList<T extends Model> extends RedisBaseCollection implements
-        java.util.List<T> {
-    private Nest nest;
-    private Class<? extends Model> clazz;
-    private final List<T> elements;
+public class RedisList<T> implements java.util.List<T> {
+    private final Nest<? extends T> nest;
+    private final Class<? extends T> clazz;
+    private final Field field;
+    private final Object owner;
 
-    public RedisList(Class<? extends Model> clazz, Nest nest) {
+    public RedisList(Class<? extends T> clazz, Nest<? extends T> nest,
+            Field field, Object owner) {
         this.clazz = clazz;
         this.nest = nest;
-        elements = new ArrayList<T>();
+        this.field = field;
+        this.owner = owner;
     }
 
     @Override
     public boolean add(T e) {
-        return internalAdd(e, true);
+        return internalAdd(e);
     }
 
     @Override
     public void add(int index, T element) {
-        internalIndexedAdd(index, element, true);
+        internalIndexedAdd(index, element);
     }
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
         boolean success = true;
         for (T element : c) {
-            success &= internalAdd(element, false);
+            success &= internalAdd(element);
         }
-        refreshStorage(true);
         return success;
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
         for (T element : c) {
-            internalIndexedAdd(index++, element, false);
+            internalIndexedAdd(index++, element);
         }
-        refreshStorage(true);
         return true;
     }
 
     @Override
     public void clear() {
-        nest.del();
-        refreshStorage(true);
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
     @Override
@@ -78,7 +78,8 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
     @Override
     public T get(int index) {
         T element = null;
-        String id = nest.lindex(index);
+        String id = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(id)) {
             element = JOhm.get(clazz, Integer.valueOf(id));
         }
@@ -115,27 +116,26 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
         return scrollElements().listIterator(index);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-        return internalRemove(o, true);
+        return internalRemove((T) o);
     }
 
     @Override
     public T remove(int index) {
-        return internalIndexedRemove(index, true);
+        return internalIndexedRemove(index);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean removeAll(Collection<?> c) {
         boolean success = true;
-        Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
-                .iterator();
+        Iterator<?> iterator = (Iterator<?>) c.iterator();
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
-            success &= internalRemove(element, false);
+            success &= internalRemove(element);
         }
-        refreshStorage(true);
         return success;
     }
 
@@ -143,30 +143,26 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
     @Override
     public boolean retainAll(Collection<?> c) {
         this.clear();
-        Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
-                .iterator();
+        Iterator<?> iterator = (Iterator<?>) c.iterator();
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
-            success &= internalAdd(element, false);
+            success &= internalAdd(element);
         }
-        refreshStorage(true);
         return success;
     }
 
     @Override
     public T set(int index, T element) {
         T previousElement = this.get(index);
-        internalIndexedAdd(index, element, true);
+        internalIndexedAdd(index, element);
         return previousElement;
     }
 
     @Override
     public int size() {
-        int repoSize = nest.llen();
-        if (repoSize != elements.size()) {
-            refreshStorage(true);
-        }
+        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .llen();
         return repoSize;
     }
 
@@ -186,51 +182,54 @@ public class RedisList<T extends Model> extends RedisBaseCollection implements
         return scrollElements().toArray(a);
     }
 
-    private boolean internalAdd(T element, boolean refreshStorage) {
-        element.save();
-        boolean success = nest.rpush(element.getId().toString()) > 0;
-        if (refreshStorage) {
-            refreshStorage(true);
-        }
+    private boolean internalAdd(T element) {
+        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .rpush(JOhmUtils.getId(element).toString()) > 0;
+        indexValue(element);
         return success;
     }
 
-    private void internalIndexedAdd(int index, T element, boolean refreshStorage) {
-        element.save();
-        nest.lset(index, element.getId().toString());
-        if (refreshStorage) {
-            refreshStorage(true);
+    private void indexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
+                    JOhmUtils.getId(owner).toString());
         }
     }
 
-    private boolean internalRemove(Object o, boolean refreshStorage) {
-        Model element = (Model) o;
-        Integer lrem = nest.lrem(1, element.getId().toString());
-        element.delete();
-        if (refreshStorage) {
-            refreshStorage(true);
+    private void unindexValue(T element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
+                    JOhmUtils.getId(owner).toString());
         }
+    }
+
+    private void internalIndexedAdd(int index, T element) {
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(index,
+                JOhmUtils.getId(element).toString());
+        indexValue(element);
+    }
+
+    private boolean internalRemove(T element) {
+        Integer lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .lrem(1, JOhmUtils.getId(element).toString());
+        unindexValue(element);
         return lrem > 0;
     }
 
-    private T internalIndexedRemove(int index, boolean refreshStorage) {
+    private T internalIndexedRemove(int index) {
         T element = this.get(index);
-        internalRemove(element, refreshStorage);
+        internalRemove(element);
         return element;
-    }
-
-    protected synchronized void purgeScrollStorage() {
-        elements.clear();
-        scrollElements();
     }
 
     @SuppressWarnings("unchecked")
     private synchronized List<T> scrollElements() {
-        if (elements.isEmpty()) {
-            List<String> ids = nest.lrange(0, -1);
-            for (String id : ids) {
-                elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
-            }
+        List<T> elements = new ArrayList<T>();
+
+        List<String> ids = nest.cat(JOhmUtils.getId(owner))
+                .cat(field.getName()).lrange(0, -1);
+        for (String id : ids) {
+            elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
         }
         return elements;
     }

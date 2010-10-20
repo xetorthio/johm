@@ -9,22 +9,24 @@ Right now it is still in development. So just the following features are availab
 
 - Basic attribute persistence (String, Integer, etc...)
 - Auto-numeric Ids
-- Simple References
+- References
 - Indexes
-- Simple finders (on just one attribute)
 - Deletion
-- List relationship
+- List, Set, SortedSet and Map relationship
+- Search on attributes, collections and references
 
 Stay close! It is growing pretty fast!
 
 ## How do I use it?
 
-You can download the latests build at: 
-    [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
+You can download the latest build at [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
 
 And this is a small example (getters and setters are not included for the sake of simplicity):
     
-    class User extends Model {
+    @Model
+    class User {
+        @Id
+        private Integer id;
     	@Attribute
     	private String name;
     	@Attribute
@@ -34,11 +36,24 @@ And this is a small example (getters and setters are not included for the sake o
     	private Country country;
     	@CollectionList(of = Comment.class)
     	private List<Comment> comments;
+    	@CollectionSet(of = Item.class)
+    	private Set<Item> purchases;
     }
 
-	class Comment extends Model {
+    @Model
+	class Comment {
+	    @Id
+	    private Integer id;
     	@Attribute
     	private String text;
+	}
+
+    @Model
+	class Item {
+	    @Id
+	    private Integer id;
+    	@Attribute
+    	private String name;
 	}
 
 Initiating JOhm:
@@ -51,7 +66,7 @@ Creating a User and persisting it:
 	User someOne = new User();
 	someOne.setName("Someone");
 	someOne.setAge(30);
-	someOne.save();
+	JOhm.save(someOne);
 
 Loading a persisted User:
 	
@@ -69,11 +84,11 @@ Model with a reference:
 
 	User someOne = new User();
 	...
-	someOne.save();
+	JOhm.save(someOne);
 
 	Country someCountry = new Country();
 	...
-	country.save();
+	JOhm.save(country);
 
 	someOne.setCountry(someCountry);
 
@@ -81,15 +96,27 @@ Model with a list of nested models:
 
 	User someOne = new User();
 	...
-	someOne.save();
+	JOhm.save(someOne);
 	
 	Comment aComment = new Comment();
 	...
-	aComment.save();
+	JOhm.save(aComment);
 	
 	someOne.getComments.add(aComment);
 
-For more usage examples check the tests. Soon I will add a nice wiki with everything you should know.
+Model with a set of nested models:
+
+	User someOne = new User();
+	...
+	JOhm.save(someOne);
+	
+	Item anItem = new Item();
+	...
+	JOhm.save(anItem);
+	
+	someOne.getPurchases.add(anItem);
+
+For more usage examples check the tests.
 
 And you are done!
 
