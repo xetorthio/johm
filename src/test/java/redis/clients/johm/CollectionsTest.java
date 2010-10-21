@@ -15,6 +15,7 @@ public class CollectionsTest extends JOhmTestBase {
     @Test
     public void shouldSetCollectionAutomatically() {
         User user = new User();
+        JOhm.save(user);
         assertNotNull(user.getLikes());
         assertTrue(user.getLikes().getClass().equals(RedisList.class));
         assertTrue(user.getPurchases().getClass().equals(RedisSet.class));
@@ -29,10 +30,10 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistList() {
         Item item = new Item();
         item.setName("Foo");
-        item.save();
+        JOhm.save(item);
 
         User user = new User();
-        user.save();
+        JOhm.save(user);
         user.getLikes().add(item);
 
         User savedUser = JOhm.get(User.class, user.getId());
@@ -50,10 +51,10 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistListAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Foo");
-        item1.save();
+        JOhm.save(item1);
 
         User user = new User();
-        user.save();
+        JOhm.save(user);
         user.getLikes().add(item1);
 
         User savedUser = JOhm.get(User.class, user.getId());
@@ -67,7 +68,7 @@ public class CollectionsTest extends JOhmTestBase {
 
         Item item2 = new Item();
         item2.setName("Bar");
-        item2.save();
+        JOhm.save(item2);
 
         user.getLikes().add(item2);
 
@@ -93,10 +94,10 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistSet() {
         Item item = new Item();
         item.setName("Bar");
-        item.save();
+        JOhm.save(item);
 
         User user = new User();
-        user.save();
+        JOhm.save(user);
         user.getPurchases().add(item);
 
         User savedUser = JOhm.get(User.class, user.getId());
@@ -112,10 +113,10 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistSetAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Bar");
-        item1.save();
+        JOhm.save(item1);
 
         User user = new User();
-        user.save();
+        JOhm.save(user);
         user.getPurchases().add(item1);
 
         User savedUser = JOhm.get(User.class, user.getId());
@@ -128,7 +129,7 @@ public class CollectionsTest extends JOhmTestBase {
 
         Item item2 = new Item();
         item2.setName("Bar");
-        item2.save();
+        JOhm.save(item2);
 
         user.getPurchases().add(item2);
 
@@ -149,14 +150,14 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistMap() {
         Item item1 = new Item();
         item1.setName("Bar1");
-        item1.save();
+        JOhm.save(item1);
 
         Item item2 = new Item();
         item2.setName("Bar2");
-        item2.save();
+        JOhm.save(item2);
 
         User user = new User();
-        user.save();
+        JOhm.save(user);
         user.getFavoritePurchases().put(1, item2);
         user.getFavoritePurchases().put(2, item1);
 
@@ -178,14 +179,14 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistMapAndCheckModifications() {
         Item item1 = new Item();
         item1.setName("Bar1");
-        item1.save();
+        JOhm.save(item1);
 
         Item item2 = new Item();
         item2.setName("Bar2");
-        item2.save();
+        JOhm.save(item2);
 
         User user = new User();
-        user.save();
+        JOhm.save(user);
         user.getFavoritePurchases().put(1, item2);
         user.getFavoritePurchases().put(2, item1);
 
@@ -221,12 +222,12 @@ public class CollectionsTest extends JOhmTestBase {
     public void persistSortedSets() {
         User user = new User();
         user.setName("foo");
-        user.save();
+        JOhm.save(user);
 
         Item item1 = new Item();
         item1.setName("bar");
         item1.setPrice(18.2f);
-        item1.save();
+        JOhm.save(item1);
 
         user.getOrderedPurchases().add(item1);
 
@@ -234,7 +235,7 @@ public class CollectionsTest extends JOhmTestBase {
         // assigned
         Item item2 = new Item();
         item2.setName("bar");
-        item2.save();
+        JOhm.save(item2);
 
         user.getOrderedPurchases().add(item2);
 

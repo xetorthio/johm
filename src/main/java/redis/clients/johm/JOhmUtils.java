@@ -8,12 +8,125 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import redis.clients.johm.collections.RedisList;
+import redis.clients.johm.collections.RedisMap;
+import redis.clients.johm.collections.RedisSet;
+import redis.clients.johm.collections.RedisSortedSet;
+
 public final class JOhmUtils {
     static String getReferenceKeyName(final Field field) {
         return field.getName() + "_id";
     }
 
-    public static boolean isNullOrEmpty(Object obj) {
+    public static Integer getId(final Object model) {
+        return getId(model, true);
+    }
+
+    public static Integer getId(final Object model, boolean checkValidity) {
+        Integer id = null;
+        if (model != null) {
+            if (checkValidity) {
+                Validator.checkValidModel(model);
+            }
+            id = Validator.checkValidId(model);
+        }
+        return id;
+    }
+
+    static boolean isNew(final Object model) {
+        return getId(model) == null;
+    }
+
+    @SuppressWarnings("unchecked")
+    static void initCollections(final Object model, final Nest<?> nest) {
+        if (model == null || nest == null) {
+            return;
+        }
+        for (Field field : model.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            try {
+                if (field.isAnnotationPresent(CollectionList.class)) {
+                    Validator.checkValidCollection(field);
+                    List<Object> list = (List<Object>) field.get(model);
+                    if (list == null) {
+                        CollectionList annotation = field
+                                .getAnnotation(CollectionList.class);
+                        RedisList<Object> redisList = new RedisList<Object>(
+                                annotation.of(), nest, field, model);
+                        field.set(model, redisList);
+                    }
+                }
+                if (field.isAnnotationPresent(CollectionSet.class)) {
+                    Validator.checkValidCollection(field);
+                    Set<Object> set = (Set<Object>) field.get(model);
+                    if (set == null) {
+                        CollectionSet annotation = field
+                                .getAnnotation(CollectionSet.class);
+                        RedisSet<Object> redisSet = new RedisSet<Object>(
+                                annotation.of(), nest, field, model);
+                        field.set(model, redisSet);
+                    }
+                }
+                if (field.isAnnotationPresent(CollectionSortedSet.class)) {
+                    Validator.checkValidCollection(field);
+                    Set<Object> sortedSet = (Set<Object>) field.get(model);
+                    if (sortedSet == null) {
+                        CollectionSortedSet annotation = field
+                                .getAnnotation(CollectionSortedSet.class);
+                        RedisSortedSet<Object> redisSortedSet = new RedisSortedSet<Object>(
+                                annotation.of(), annotation.by(), nest, field,
+                                model);
+                        field.set(model, redisSortedSet);
+                    }
+                }
+                if (field.isAnnotationPresent(CollectionMap.class)) {
+                    Validator.checkValidCollection(field);
+                    Map<Object, Object> map = (Map<Object, Object>) field
+                            .get(model);
+                    if (map == null) {
+                        CollectionMap annotation = field
+                                .getAnnotation(CollectionMap.class);
+                        RedisMap<Object, Object> redisMap = new RedisMap<Object, Object>(
+                                annotation.key(), annotation.value(), nest,
+                                field, model);
+                        field.set(model, redisMap);
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                throw new InvalidFieldException();
+            } catch (IllegalAccessException e) {
+                throw new InvalidFieldException();
+            }
+        }
+    }
+
+    static void loadId(final Object model, final Integer id) {
+        if (model != null) {
+            boolean idFieldPresent = false;
+            for (Field field : model.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(Id.class)) {
+                    idFieldPresent = true;
+                    Validator.checkValidIdType(field);
+                    try {
+                        field.set(model, id);
+                    } catch (IllegalArgumentException e) {
+                        throw new JOhmException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new JOhmException(e);
+                    }
+                    break;
+                }
+            }
+            if (!idFieldPresent) {
+                throw new JOhmException(
+                        "JOhm does not support a Model without an Id");
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static boolean isNullOrEmpty(final Object obj) {
         if (obj == null) {
             return true;
         }
@@ -100,12 +213,60 @@ public final class JOhmUtils {
             }
         }
 
+        static Integer checkValidId(final Object model) {
+            Integer id = null;
+            boolean idFieldPresent = false;
+            for (Field field : model.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.isAnnotationPresent(Id.class)) {
+                    idFieldPresent = true;
+                    Validator.checkValidIdType(field);
+                    try {
+                        id = (Integer) field.get(model);
+                    } catch (IllegalArgumentException e) {
+                        throw new JOhmException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new JOhmException(e);
+                    }
+                    break;
+                }
+            }
+            if (!idFieldPresent) {
+                throw new JOhmException(
+                        "JOhm does not support a Model without an Id");
+            }
+            return id;
+        }
+
+        static void checkValidIdType(final Field field) {
+            Class<?> type = field.getType().getClass();
+            if (!type.isInstance(Integer.class) || !type.isInstance(int.class)) {
+                throw new JOhmException(field.getType().getSimpleName()
+                        + " is annotated an Id but is not an integer");
+            }
+        }
+
         static boolean isIndexable(final String attributeName) {
             // Prevent null/empty keys and null/empty values
             if (!isNullOrEmpty(attributeName)) {
                 return true;
             } else {
                 return false;
+            }
+        }
+
+        static void checkValidModel(final Object model) {
+            checkValidModelClazz(model.getClass());
+        }
+
+        static void checkValidModelClazz(final Class<?> modelClazz) {
+            if (!modelClazz.isAnnotationPresent(Model.class)) {
+                throw new JOhmException(
+                        "Class pretending to be a Model but is not really annotated");
+            }
+            if (modelClazz.isInterface()) {
+                throw new JOhmException(
+                        "An interface cannot be annotated as a Model");
             }
         }
 

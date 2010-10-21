@@ -11,7 +11,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
         User user = new User();
         user.setName("foo");
         user.setRoom("vroom");
-        user = user.save();
+        user = JOhm.save(user);
 
         assertNotNull(user);
         // assertEquals(11, user.getId());
@@ -22,7 +22,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
         assertEquals(user.getAge(), savedUser.getAge());
 
         // cleanup now
-        assertTrue(user.delete());
+        assertTrue(JOhm.delete(User.class, user.getId()));
         assertNull(JOhm.get(User.class, user.getId()));
     }
 
@@ -34,14 +34,14 @@ public class BasicPersistanceTest extends JOhmTestBase {
         user1.setAge(99);
         user1.setSalary(9999.99f);
         user1.setInitial('f');
-        user1 = user1.save();
+        user1 = JOhm.save(user1);
 
         User user2 = new User();
         user2.setName("foo2");
         user2.setRoom("vroom2");
         user2.setAge(9);
         user2.setInitial('f');
-        user2 = user2.save();
+        user2 = JOhm.save(user2);
 
         User user3 = new User();
         user3.setName("foo3");
@@ -49,7 +49,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
         user3.setAge(19);
         user3.setSalary(9999.9f);
         user3.setInitial('f');
-        user3 = user3.save();
+        user3 = JOhm.save(user3);
 
         assertNotNull(user1);
         // assertEquals(1, user1.getId());
@@ -81,30 +81,30 @@ public class BasicPersistanceTest extends JOhmTestBase {
         assertEquals(user3.getSalary(), savedUser3.getSalary(), 0D);
 
         // cleanup now
-        assertTrue(user1.delete());
+        assertTrue(JOhm.delete(User.class, user1.getId()));
         assertNull(JOhm.get(User.class, user1.getId()));
-        assertTrue(user2.delete());
+        assertTrue(JOhm.delete(User.class, user2.getId()));
         assertNull(JOhm.get(User.class, user2.getId()));
-        assertTrue(user3.delete());
+        assertTrue(JOhm.delete(User.class, user3.getId()));
         assertNull(JOhm.get(User.class, user3.getId()));
     }
 
     @Test
     public void delete() {
         User user = new User();
-        user.save();
+        JOhm.save(user);
         int id = user.getId();
 
         assertNotNull(JOhm.get(User.class, id));
-        assertTrue(user.delete());
+        assertTrue(JOhm.delete(User.class, id));
         assertNull(JOhm.get(User.class, id));
 
         user = new User();
-        user.save();
+        JOhm.save(user);
         id = user.getId();
 
         assertNotNull(JOhm.get(User.class, id));
-        assertTrue(user.delete());
+        assertTrue(JOhm.delete(User.class, id));
         assertNull(JOhm.get(User.class, id));
     }
 
@@ -113,7 +113,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
         User user = new User();
         user.setName("foo");
         user.setRoom("3A");
-        user.save();
+        JOhm.save(user);
 
         User savedUser = JOhm.get(User.class, user.getId());
         assertEquals(user.getName(), savedUser.getName());
@@ -125,7 +125,13 @@ public class BasicPersistanceTest extends JOhmTestBase {
         User user = new User();
         user.setName("bar");
         user.setCountry(new Country());
-        user.save();
+        JOhm.save(user);
+    }
+    
+    @Test(expected = JOhmException.class)
+    public void shouldNotPersistWithoutModel() {
+        Nest<String> dummyNest = new Nest<String>();
+        JOhm.save(dummyNest);
     }
 
     @Test
@@ -133,26 +139,23 @@ public class BasicPersistanceTest extends JOhmTestBase {
         User user = new User();
         user.setName("foo");
         user.setRoom("3A");
-        user.save();
+        JOhm.save(user);
 
         User savedUser = JOhm.get(User.class, user.getId());
         assertNull(savedUser.getCountry());
 
         Country somewhere = new Country();
         somewhere.setName("Somewhere");
-        somewhere.save();
+        JOhm.save(somewhere);
 
         user = new User();
         user.setName("bar");
         user.setCountry(somewhere);
-        user.save();
+        JOhm.save(user);
 
         savedUser = JOhm.get(User.class, user.getId());
         assertNotNull(savedUser.getCountry());
         assertEquals(somewhere.getId(), savedUser.getCountry().getId());
         assertEquals(somewhere.getName(), savedUser.getCountry().getName());
-
-        // cleanup now
-        assertTrue(user.delete());
     }
 }

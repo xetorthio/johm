@@ -10,7 +10,6 @@ import java.util.ListIterator;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Model;
 import redis.clients.johm.Nest;
 
 /**
@@ -20,14 +19,14 @@ import redis.clients.johm.Nest;
  * staleness but does so without any locking and is not thread-safe. Only add
  * and remove operations trigger a remote-sync of local internal storage.
  */
-public class RedisList<T extends Model> implements java.util.List<T> {
-    private Nest nest;
-    private Class<? extends Model> clazz;
-    private Field field;
-    private Model owner;
+public class RedisList<T> implements java.util.List<T> {
+    private final Nest<? extends T> nest;
+    private final Class<? extends T> clazz;
+    private final Field field;
+    private final Object owner;
 
-    public RedisList(Class<? extends Model> clazz, Nest nest, Field field,
-            Model owner) {
+    public RedisList(Class<? extends T> clazz, Nest<? extends T> nest,
+            Field field, Object owner) {
         this.clazz = clazz;
         this.nest = nest;
         this.field = field;
@@ -63,7 +62,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
 
     @Override
     public void clear() {
-        nest.cat(owner.getId()).cat(field.getName()).del();
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
     @Override
@@ -79,7 +78,8 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     @Override
     public T get(int index) {
         T element = null;
-        String id = nest.cat(owner.getId()).cat(field.getName()).lindex(index);
+        String id = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(id)) {
             element = JOhm.get(clazz, Integer.valueOf(id));
         }
@@ -131,8 +131,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     @Override
     public boolean removeAll(Collection<?> c) {
         boolean success = true;
-        Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
-                .iterator();
+        Iterator<?> iterator = (Iterator<?>) c.iterator();
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
             success &= internalRemove(element);
@@ -144,8 +143,7 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     @Override
     public boolean retainAll(Collection<?> c) {
         this.clear();
-        Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
-                .iterator();
+        Iterator<?> iterator = (Iterator<?>) c.iterator();
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
@@ -163,7 +161,8 @@ public class RedisList<T extends Model> implements java.util.List<T> {
 
     @Override
     public int size() {
-        int repoSize = nest.cat(owner.getId()).cat(field.getName()).llen();
+        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .llen();
         return repoSize;
     }
 
@@ -184,35 +183,35 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     }
 
     private boolean internalAdd(T element) {
-        boolean success = nest.cat(owner.getId()).cat(field.getName()).rpush(
-                element.getId().toString()) > 0;
+        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .rpush(JOhmUtils.getId(element).toString()) > 0;
         indexValue(element);
         return success;
     }
 
     private void indexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(element.getId()).sadd(
-                    owner.getId().toString());
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
+                    JOhmUtils.getId(owner).toString());
         }
     }
 
     private void unindexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(element.getId()).srem(
-                    owner.getId().toString());
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
+                    JOhmUtils.getId(owner).toString());
         }
     }
 
     private void internalIndexedAdd(int index, T element) {
-        nest.cat(owner.getId()).cat(field.getName()).lset(index,
-                element.getId().toString());
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(index,
+                JOhmUtils.getId(element).toString());
         indexValue(element);
     }
 
     private boolean internalRemove(T element) {
-        Integer lrem = nest.cat(owner.getId()).cat(field.getName()).lrem(1,
-                element.getId().toString());
+        Integer lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .lrem(1, JOhmUtils.getId(element).toString());
         unindexValue(element);
         return lrem > 0;
     }
@@ -227,8 +226,8 @@ public class RedisList<T extends Model> implements java.util.List<T> {
     private synchronized List<T> scrollElements() {
         List<T> elements = new ArrayList<T>();
 
-        List<String> ids = nest.cat(owner.getId()).cat(field.getName()).lrange(
-                0, -1);
+        List<String> ids = nest.cat(JOhmUtils.getId(owner))
+                .cat(field.getName()).lrange(0, -1);
         for (String id : ids) {
             elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
         }

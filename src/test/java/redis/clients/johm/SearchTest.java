@@ -15,7 +15,7 @@ public class SearchTest extends JOhmTestBase {
         user1.setName("model1");
         user1.setRoom("tworoom");
         user1.setAge(88);
-        user1.save();
+        JOhm.save(user1);
 
         JOhm.find(User.class, null, "foo");
     }
@@ -26,7 +26,7 @@ public class SearchTest extends JOhmTestBase {
         user1.setName("model1");
         user1.setRoom("tworoom");
         user1.setAge(88);
-        user1.save();
+        JOhm.save(user1);
 
         JOhm.find(User.class, "age", null);
     }
@@ -37,7 +37,7 @@ public class SearchTest extends JOhmTestBase {
         user1.setName("model1");
         user1.setRoom("tworoom");
         user1.setAge(88);
-        user1.save();
+        JOhm.save(user1);
 
         JOhm.find(User.class, "salary", 1000);
     }
@@ -50,7 +50,7 @@ public class SearchTest extends JOhmTestBase {
         user1.setAge(88);
         user1.setSalary(9999.99f);
         user1.setInitial('m');
-        user1.save();
+        JOhm.save(user1);
         int id1 = user1.getId();
 
         User user2 = new User();
@@ -58,7 +58,7 @@ public class SearchTest extends JOhmTestBase {
         user2.setRoom("threeroom");
         user2.setAge(8);
         user2.setInitial('z');
-        user2 = user2.save();
+        user2 = JOhm.save(user2);
         int id2 = user2.getId();
 
         assertNotNull(JOhm.get(User.class, id1));
@@ -105,16 +105,16 @@ public class SearchTest extends JOhmTestBase {
     public void canSearchOnLists() {
         Item item = new Item();
         item.setName("bar");
-        item.save();
+        JOhm.save(item);
 
         User user1 = new User();
         user1.setName("foo");
-        user1.save();
+        JOhm.save(user1);
         user1.getLikes().add(item);
 
         User user2 = new User();
         user2.setName("car");
-        user2.save();
+        JOhm.save(user2);
         user2.getLikes().add(item);
 
         List<User> users = JOhm.find(User.class, "likes", item.getId());
@@ -128,16 +128,16 @@ public class SearchTest extends JOhmTestBase {
     public void canSearchOnSets() {
         Item item = new Item();
         item.setName("bar");
-        item.save();
+        JOhm.save(item);
 
         User user1 = new User();
         user1.setName("foo");
-        user1.save();
+        JOhm.save(user1);
         user1.getPurchases().add(item);
 
         User user2 = new User();
         user2.setName("car");
-        user2.save();
+        JOhm.save(user2);
         user2.getPurchases().add(item);
 
         List<User> users = JOhm.find(User.class, "purchases", item.getId());
@@ -151,16 +151,16 @@ public class SearchTest extends JOhmTestBase {
     public void canSearchOnSortedSets() {
         Item item = new Item();
         item.setName("bar");
-        item.save();
+        JOhm.save(item);
 
         User user1 = new User();
         user1.setName("foo");
-        user1.save();
+        JOhm.save(user1);
         user1.getOrderedPurchases().add(item);
 
         User user2 = new User();
         user2.setName("car");
-        user2.save();
+        JOhm.save(user2);
         user2.getOrderedPurchases().add(item);
 
         List<User> users = JOhm.find(User.class, "orderedPurchases", item
@@ -175,16 +175,16 @@ public class SearchTest extends JOhmTestBase {
     public void canSearchOnMaps() {
         Item item = new Item();
         item.setName("bar");
-        item.save();
+        JOhm.save(item);
 
         User user1 = new User();
         user1.setName("foo");
-        user1.save();
+        JOhm.save(user1);
         user1.getFavoritePurchases().put(1, item);
 
         User user2 = new User();
         user2.setName("car");
-        user2.save();
+        JOhm.save(user2);
         user2.getFavoritePurchases().put(1, item);
 
         List<User> users = JOhm.find(User.class, "favoritePurchases", item
@@ -199,15 +199,15 @@ public class SearchTest extends JOhmTestBase {
     public void canSearchOnReferences() {
         Country somewhere = new Country();
         somewhere.setName("somewhere");
-        somewhere.save();
+        JOhm.save(somewhere);
 
         User user1 = new User();
         user1.setCountry(somewhere);
-        user1.save();
+        JOhm.save(user1);
 
         User user2 = new User();
         user2.setCountry(somewhere);
-        user2.save();
+        JOhm.save(user2);
 
         List<User> users = JOhm.find(User.class, "country", somewhere.getId());
 

@@ -8,7 +8,7 @@ import java.util.Set;
 
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
-import redis.clients.johm.Model;
+import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Nest;
 
 /**
@@ -19,14 +19,14 @@ import redis.clients.johm.Nest;
  * whatever order in which Redis returns its set elements. Only add and remove
  * trigger a remote-sync of local internal storage.
  */
-public class RedisSet<T extends Model> implements Set<T> {
-    private final Nest nest;
-    private final Class<? extends Model> clazz;
-    private Model owner;
-    private Field field;
+public class RedisSet<T> implements Set<T> {
+    private final Nest<? extends T> nest;
+    private final Class<? extends T> clazz;
+    private final Object owner;
+    private final Field field;
 
-    public RedisSet(final Class<? extends Model> clazz, final Nest nest,
-            Field field, Model owner) {
+    public RedisSet(final Class<? extends T> clazz,
+            final Nest<? extends T> nest, Field field, Object owner) {
         this.clazz = clazz;
         this.nest = nest;
         this.field = field;
@@ -35,22 +35,22 @@ public class RedisSet<T extends Model> implements Set<T> {
 
     private void indexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(element.getId()).sadd(
-                    owner.getId().toString());
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
+                    JOhmUtils.getId(owner).toString());
         }
     }
 
     private void unindexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(element.getId()).srem(
-                    owner.getId().toString());
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
+                    JOhmUtils.getId(owner).toString());
         }
     }
 
     @Override
     public int size() {
-        int repoSize = nest.cat(owner.getId()).cat(field.getName()).smembers()
-                .size();
+        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .smembers().size();
         return repoSize;
     }
 
@@ -109,8 +109,7 @@ public class RedisSet<T extends Model> implements Set<T> {
     @SuppressWarnings("unchecked")
     public boolean retainAll(Collection<?> c) {
         this.clear();
-        Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
-                .iterator();
+        Iterator<?> iterator = (Iterator<?>) c.iterator();
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
@@ -122,8 +121,7 @@ public class RedisSet<T extends Model> implements Set<T> {
     @Override
     @SuppressWarnings("unchecked")
     public boolean removeAll(Collection<?> c) {
-        Iterator<? extends Model> iterator = (Iterator<? extends Model>) c
-                .iterator();
+        Iterator<?> iterator = (Iterator<?>) c.iterator();
         boolean success = true;
         while (iterator.hasNext()) {
             T element = (T) iterator.next();
@@ -134,26 +132,26 @@ public class RedisSet<T extends Model> implements Set<T> {
 
     @Override
     public void clear() {
-        nest.cat(owner.getId()).cat(field.getName()).del();
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
     private boolean internalAdd(T element) {
-        boolean success = nest.cat(owner.getId()).cat(field.getName()).sadd(
-                element.getId().toString()) > 0;
+        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .sadd(JOhmUtils.getId(element).toString()) > 0;
         indexValue(element);
         return success;
     }
 
     private boolean internalRemove(T element) {
-        boolean success = nest.cat(owner.getId()).cat(field.getName()).srem(
-                element.getId().toString()) > 0;
+        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .srem(JOhmUtils.getId(element).toString()) > 0;
         unindexValue(element);
         return success;
     }
 
     @SuppressWarnings("unchecked")
     private synchronized Set<T> scrollElements() {
-        Set<String> ids = nest.cat(owner.getId()).cat(field.getName())
+        Set<String> ids = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .smembers();
         Set<T> elements = new HashSet<T>();
         for (String id : ids) {

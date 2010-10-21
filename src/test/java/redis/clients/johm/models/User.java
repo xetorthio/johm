@@ -9,11 +9,15 @@ import redis.clients.johm.CollectionList;
 import redis.clients.johm.CollectionMap;
 import redis.clients.johm.CollectionSet;
 import redis.clients.johm.CollectionSortedSet;
+import redis.clients.johm.Id;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
 
-public class User extends Model {
+@Model
+public class User {
+    @Id
+    private Integer id;
     @Attribute
     @Indexed
     private String name;
@@ -40,6 +44,10 @@ public class User extends Model {
     @CollectionSortedSet(of = Item.class, by = "price")
     @Indexed
     private Set<Item> orderedPurchases;
+
+    public Integer getId() {
+        return id;
+    }
 
     public List<Item> getLikes() {
         return likes;

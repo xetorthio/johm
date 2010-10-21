@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface CollectionSortedSet {
-    Class<? extends Model> of();
+    Class<?> of();
 
     String by();
 }

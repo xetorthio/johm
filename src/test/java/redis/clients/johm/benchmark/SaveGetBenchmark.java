@@ -14,7 +14,7 @@ public class SaveGetBenchmark extends JOhmBenchmarkTestBase {
             User user = new User();
             user.setName("foo" + n);
             user.setRoom("vroom" + n);
-            user.save();
+            JOhm.save(user);
             JOhm.get(User.class, user.getId());
         }
         timer.end();
