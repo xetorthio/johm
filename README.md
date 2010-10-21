@@ -19,11 +19,7 @@ Stay close! It is growing pretty fast!
 
 ## How do I use it?
 
-<<<<<<< HEAD
-You can download the latests build at [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
-=======
 You can download the latest build at [http://github.com/xetorthio/johm/downloads](http://github.com/xetorthio/johm/downloads)
->>>>>>> 8b5b361... Changed JOhm persistence paradigm to JPA-like from inheritance-like to make API use annotation-driven and minimally-invasive.
 
 And this is a small example (getters and setters are not included for the sake of simplicity):
     
@@ -52,14 +48,10 @@ And this is a small example (getters and setters are not included for the sake o
     	private String text;
 	}
 
-<<<<<<< HEAD
-	class Item extends Model {
-=======
     @Model
 	class Item {
 	    @Id
 	    private Integer id;
->>>>>>> 8b5b361... Changed JOhm persistence paradigm to JPA-like from inheritance-like to make API use annotation-driven and minimally-invasive.
     	@Attribute
     	private String name;
 	}
@@ -116,17 +108,6 @@ Model with a set of nested models:
 
 	User someOne = new User();
 	...
-<<<<<<< HEAD
-	someOne.save();
-	
-	Item anItem = new Item();
-	...
-	anItem.save();
-	
-	someOne.getPurchases.add(anItem);
-
-For more usage examples check the tests. Soon I will add a nice wiki with everything you should know.
-=======
 	JOhm.save(someOne);
 	
 	Item anItem = new Item();
@@ -136,7 +117,6 @@ For more usage examples check the tests. Soon I will add a nice wiki with everyt
 	someOne.getPurchases.add(anItem);
 
 For more usage examples check the tests.
->>>>>>> 8b5b361... Changed JOhm persistence paradigm to JPA-like from inheritance-like to make API use annotation-driven and minimally-invasive.
 
 And you are done!
 
