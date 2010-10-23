@@ -9,24 +9,19 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
 
-/**
- * Nest serves as a remote proxy for Jedis-to-Redis bridge. Its name signifies
- * nested namespaced key generation for Redis by using chainable namespaces.
- */
-public class Nest {
+public class Nest<T> {
     private static final String COLON = ":";
     private StringBuilder sb;
     private String key;
-    private static JedisPool jedisPool;
-    private static volatile boolean reuseConnectionMode;
-    private static Jedis cachedConnection;
+    private JedisPool jedisPool;
 
-    public static void setJedisPool(JedisPool jedisPool) {
-        Nest.jedisPool = jedisPool;
+    public void setJedisPool(JedisPool jedisPool) {
+        this.jedisPool = jedisPool;
+        checkRedisLiveness();
     }
 
-    public Nest fork() {
-        return new Nest(key());
+    public Nest<T> fork() {
+        return new Nest<T>(key());
     }
 
     public Nest() {
@@ -37,29 +32,12 @@ public class Nest {
         this.key = key;
     }
 
-    public Nest(Class<? extends Model> clazz) {
+    public Nest(Class<T> clazz) {
         this.key = clazz.getSimpleName();
     }
 
-    public Nest(JOhm jOhm) {
-        this.key = jOhm.getClass().getSimpleName();
-    }
-
-    public static boolean isReuseConnectionMode() {
-        return reuseConnectionMode;
-    }
-
-    public static synchronized void setReuseConnectionMode(
-            boolean reuseConnectionMode) {
-        Nest.reuseConnectionMode = reuseConnectionMode;
-        if (!reuseConnectionMode) {
-            if (cachedConnection != null) {
-                if (jedisPool != null) {
-                    returnResource(cachedConnection);
-                }
-                cachedConnection = null;
-            }
-        }
+    public Nest(T model) {
+        this.key = model.getClass().getSimpleName();
     }
 
     public String key() {
@@ -78,21 +56,21 @@ public class Nest {
         }
     }
 
-    public Nest cat(int id) {
+    public Nest<T> cat(int id) {
         prefix();
         sb.append(id);
         sb.append(COLON);
         return this;
     }
 
-    public Nest cat(Object field) {
+    public Nest<T> cat(Object field) {
         prefix();
         sb.append(field);
         sb.append(COLON);
         return this;
     }
 
-    public Nest cat(String field) {
+    public Nest<T> cat(String field) {
         prefix();
         sb.append(field);
         sb.append(COLON);
@@ -250,26 +228,33 @@ public class Nest {
         return lrange;
     }
 
-    private static void returnResource(final Jedis jedis) {
-        if (!reuseConnectionMode) {
-            jedisPool.returnResource(jedis);
-        }
+    // Redis SortedSet Operations
+    public Set<String> zrange(int start, int end) {
+        Jedis jedis = getResource();
+        Set<String> zrange = jedis.zrange(key(), start, end);
+        returnResource(jedis);
+        return zrange;
     }
 
-    private static Jedis getResource() {
-        Jedis jedis;
-        if (reuseConnectionMode) {
-            if (cachedConnection == null) {
-                cachedConnection = getJedisHandle();
-            }
-            jedis = cachedConnection;
-        } else {
-            jedis = getJedisHandle();
-        }
-        return jedis;
+    public Integer zadd(float score, String member) {
+        Jedis jedis = getResource();
+        Integer zadd = jedis.zadd(key(), score, member);
+        returnResource(jedis);
+        return zadd;
     }
 
-    private static Jedis getJedisHandle() {
+    public Integer zcard() {
+        Jedis jedis = getResource();
+        Integer zadd = jedis.zcard(key());
+        returnResource(jedis);
+        return zadd;
+    }
+
+    private void returnResource(final Jedis jedis) {
+        jedisPool.returnResource(jedis);
+    }
+
+    private Jedis getResource() {
         Jedis jedis;
         try {
             jedis = jedisPool.getResource();
@@ -277,5 +262,12 @@ public class Nest {
             throw new JOhmException(e);
         }
         return jedis;
+    }
+
+    private void checkRedisLiveness() {
+        if (jedisPool == null) {
+            throw new JOhmException(
+                    "JOhm will fail to do most useful tasks without Redis");
+        }
     }
 }

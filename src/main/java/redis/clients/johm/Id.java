@@ -7,8 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface CollectionMap {
-    Class<?> key();
+public @interface Id {
 
-    Class<?> value();
 }

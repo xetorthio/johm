@@ -1,14 +1,16 @@
 package redis.clients.johm.collections;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Model;
 import redis.clients.johm.Nest;
 
 /**
@@ -18,31 +20,46 @@ import redis.clients.johm.Nest;
  * does so without any locking and is not thread-safe. Only add and remove
  * operations trigger a remote-sync of local internal storage.
  */
-public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
-        Map<K, V> {
-    private final Nest nest;
-    private final Class<?> keyClazz;
-    private final Class<? extends Model> valueClazz;
-    private final Map<K, V> backingMap;
+public class RedisMap<K, V> implements Map<K, V> {
+    private final Nest<? extends V> nest;
+    private final Class<? extends K> keyClazz;
+    private final Class<? extends V> valueClazz;
+    private final Field field;
+    private final Object owner;
 
-    public RedisMap(final Class<?> keyClazz,
-            final Class<? extends Model> valueClazz, final Nest nest) {
+    public RedisMap(final Class<? extends K> keyClazz,
+            final Class<? extends V> valueClazz, final Nest<? extends V> nest,
+            Field field, Object owner) {
         this.keyClazz = keyClazz;
         this.valueClazz = valueClazz;
         this.nest = nest;
-        backingMap = new LinkedHashMap<K, V>();
+        this.field = field;
+        this.owner = owner;
+    }
+
+    private void indexValue(K element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element).sadd(
+                    JOhmUtils.getId(owner).toString());
+        }
+    }
+
+    private void unindexValue(K element) {
+        if (field.isAnnotationPresent(Indexed.class)) {
+            nest.cat(field.getName()).cat(element).srem(
+                    JOhmUtils.getId(owner).toString());
+        }
     }
 
     @Override
     public void clear() {
-        Map<String, String> savedHash = nest.hgetAll();
+        Map<String, String> savedHash = nest.cat(JOhmUtils.getId(owner)).cat(
+                field.getName()).hgetAll();
         for (Map.Entry<String, String> entry : savedHash.entrySet()) {
-            V value = JOhm.get(valueClazz, Integer.parseInt(entry.getValue()));
-            value.delete();
-            nest.hdel(entry.getKey());
+            nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).hdel(
+                    entry.getKey());
         }
-        nest.del();
-        refreshStorage(true);
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
     @Override
@@ -63,7 +80,8 @@ public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
     @Override
     public V get(Object key) {
         V value = null;
-        String valueKey = nest.hget(key.toString());
+        String valueKey = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .hget(key.toString());
         if (!JOhmUtils.isNullOrEmpty(valueKey)) {
             value = JOhm.get(valueClazz, Integer.parseInt(valueKey));
         }
@@ -79,7 +97,8 @@ public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
     @Override
     public Set<K> keySet() {
         Set<K> keys = new LinkedHashSet<K>();
-        for (String key : nest.hkeys()) {
+        for (String key : nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .hkeys()) {
             keys.add((K) JOhmUtils.Convertor.convert(keyClazz, key));
         }
         return keys;
@@ -88,32 +107,31 @@ public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
     @Override
     public V put(K key, V value) {
         V previousValue = get(key);
-        internalPut(key, value, true);
+        internalPut(key, value);
         return previousValue;
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> mapToCopyIn) {
         for (Map.Entry<? extends K, ? extends V> entry : mapToCopyIn.entrySet()) {
-            internalPut(entry.getKey(), entry.getValue(), false);
+            internalPut(entry.getKey(), entry.getValue());
         }
-        refreshStorage(true);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public V remove(Object key) {
         V value = get(key);
-        value.delete();
-        nest.hdel(key.toString());
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).hdel(
+                key.toString());
+        unindexValue((K) key);
         return value;
     }
 
     @Override
     public int size() {
-        int repoSize = nest.hlen();
-        if (repoSize != backingMap.size()) {
-            refreshStorage(true);
-        }
+        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                .hlen();
         return repoSize;
     }
 
@@ -122,34 +140,25 @@ public class RedisMap<K, V extends Model> extends RedisBaseCollection implements
         return scrollElements().values();
     }
 
-    private V internalPut(final K key, final V value, boolean refreshStorage) {
-        value.save();
+    private V internalPut(final K key, final V value) {
         Map<String, String> hash = new LinkedHashMap<String, String>();
-        hash.put(key.toString(), value.getId().toString());
-        nest.hmset(hash);
-        if (refreshStorage) {
-            refreshStorage(true);
-        }
-
+        hash.put(key.toString(), JOhmUtils.getId(value).toString());
+        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).hmset(hash);
+        indexValue(key);
         return value;
-    }
-
-    protected synchronized void purgeScrollStorage() {
-        backingMap.clear();
-        scrollElements();
     }
 
     @SuppressWarnings("unchecked")
     private synchronized Map<K, V> scrollElements() {
-        if (backingMap.isEmpty()) {
-            Map<String, String> savedHash = nest.hgetAll();
-            for (Map.Entry<String, String> entry : savedHash.entrySet()) {
-                K savedKey = (K) JOhmUtils.Convertor.convert(keyClazz, entry
-                        .getKey());
-                V savedValue = JOhm.get(valueClazz, Integer.parseInt(entry
-                        .getValue()));
-                backingMap.put(savedKey, savedValue);
-            }
+        Map<String, String> savedHash = nest.cat(JOhmUtils.getId(owner)).cat(
+                field.getName()).hgetAll();
+        Map<K, V> backingMap = new HashMap<K, V>();
+        for (Map.Entry<String, String> entry : savedHash.entrySet()) {
+            K savedKey = (K) JOhmUtils.Convertor.convert(keyClazz, entry
+                    .getKey());
+            V savedValue = JOhm.get(valueClazz, Integer.parseInt(entry
+                    .getValue()));
+            backingMap.put(savedKey, savedValue);
         }
         return backingMap;
     }

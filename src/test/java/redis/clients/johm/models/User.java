@@ -8,11 +8,16 @@ import redis.clients.johm.Attribute;
 import redis.clients.johm.CollectionList;
 import redis.clients.johm.CollectionMap;
 import redis.clients.johm.CollectionSet;
+import redis.clients.johm.CollectionSortedSet;
+import redis.clients.johm.Id;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
 
-public class User extends Model {
+@Model
+public class User {
+    @Id
+    private Integer id;
     @Attribute
     @Indexed
     private String name;
@@ -25,13 +30,24 @@ public class User extends Model {
     @Attribute
     private char initial;
     @Reference
+    @Indexed
     private Country country;
     @CollectionList(of = Item.class)
+    @Indexed
     private List<Item> likes;
     @CollectionSet(of = Item.class)
+    @Indexed
     private Set<Item> purchases;
     @CollectionMap(key = Integer.class, value = Item.class)
+    @Indexed
     private Map<Integer, Item> favoritePurchases;
+    @CollectionSortedSet(of = Item.class, by = "price")
+    @Indexed
+    private Set<Item> orderedPurchases;
+
+    public Integer getId() {
+        return id;
+    }
 
     public List<Item> getLikes() {
         return likes;
@@ -39,6 +55,10 @@ public class User extends Model {
 
     public Set<Item> getPurchases() {
         return purchases;
+    }
+
+    public Set<Item> getOrderedPurchases() {
+        return orderedPurchases;
     }
 
     public Map<Integer, Item> getFavoritePurchases() {

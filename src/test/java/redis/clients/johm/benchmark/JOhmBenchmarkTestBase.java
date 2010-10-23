@@ -13,7 +13,7 @@ class JOhmBenchmarkTestBase extends JOhmTestBase {
         stats.append(", opTypes=").append(opTypes);
         stats.append(", thruput=")
                 .append((1000 * opTypes * totalOps) / elapsed).append(
-                        " ops/sec");
+                        " ops");
         System.out.println(stats);
     }
 }
