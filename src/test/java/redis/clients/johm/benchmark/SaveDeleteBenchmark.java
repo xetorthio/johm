@@ -1,8 +1,12 @@
 package redis.clients.johm.benchmark;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
 import redis.clients.johm.JOhm;
+import redis.clients.johm.models.Country;
 import redis.clients.johm.models.User;
 
 public class SaveDeleteBenchmark extends JOhmBenchmarkTestBase {
@@ -24,4 +28,5 @@ public class SaveDeleteBenchmark extends JOhmBenchmarkTestBase {
         timer.end();
         printStats("saveDeleteModel", totalOps, 2, timer.elapsed());
     }
+
 }

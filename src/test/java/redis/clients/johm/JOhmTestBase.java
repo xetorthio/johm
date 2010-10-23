@@ -7,23 +7,31 @@ import org.junit.Before;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Protocol;
 
 public class JOhmTestBase extends Assert {
-    protected static JedisPool jedisPool;
+    protected JedisPool jedisPool;
+    protected volatile static boolean benchmarkMode;
 
     @Before
     public void startUp() throws TimeoutException {
         startJedisEngine();
     }
 
-    protected static void startJedisEngine() throws TimeoutException {
-        jedisPool = new JedisPool("localhost", 6379, 2000);
+    protected void startJedisEngine() throws TimeoutException {
+        if (benchmarkMode) {
+            jedisPool = new JedisPool("localhost", Protocol.DEFAULT_PORT, 2000);
+            jedisPool.setResourcesNumber(50);
+            jedisPool.setDefaultPoolWait(1000000);
+        } else {
+            jedisPool = new JedisPool("localhost");
+        }
         jedisPool.init();
         JOhm.setPool(jedisPool);
         purgeRedis();
     }
 
-    protected static void purgeRedis() throws TimeoutException {
+    protected void purgeRedis() throws TimeoutException {
         Jedis jedis = jedisPool.getResource();
         jedis.flushAll();
         jedisPool.returnResource(jedis);

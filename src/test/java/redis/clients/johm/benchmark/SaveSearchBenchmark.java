@@ -1,5 +1,8 @@
 package redis.clients.johm.benchmark;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
 import redis.clients.johm.JOhm;
