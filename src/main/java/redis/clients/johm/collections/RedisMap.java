@@ -83,7 +83,7 @@ public class RedisMap<K, V> implements Map<K, V> {
         String valueKey = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .hget(key.toString());
         if (!JOhmUtils.isNullOrEmpty(valueKey)) {
-            value = JOhm.get(valueClazz, Integer.parseInt(valueKey));
+            value = JOhm.<V>get(valueClazz, Integer.parseInt(valueKey));
         }
         return value;
     }
@@ -156,7 +156,7 @@ public class RedisMap<K, V> implements Map<K, V> {
         for (Map.Entry<String, String> entry : savedHash.entrySet()) {
             K savedKey = (K) JOhmUtils.Convertor.convert(keyClazz, entry
                     .getKey());
-            V savedValue = JOhm.get(valueClazz, Integer.parseInt(entry
+            V savedValue = JOhm.<V>get(valueClazz, Integer.parseInt(entry
                     .getValue()));
             backingMap.put(savedKey, savedValue);
         }

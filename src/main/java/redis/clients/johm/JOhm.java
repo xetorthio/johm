@@ -143,7 +143,7 @@ public final class JOhm {
      * @return
      */
     public static <T> T save(final Object model) {
-        return save(model, false);
+        return JOhm.<T>save(model, false);
     }
 
     @SuppressWarnings("unchecked")
