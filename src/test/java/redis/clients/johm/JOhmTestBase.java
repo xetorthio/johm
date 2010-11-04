@@ -25,7 +25,8 @@ public class JOhmTestBase extends Assert {
 
     protected static void purgeRedis() throws TimeoutException {
         Jedis jedis = jedisPool.getResource();
-        jedis.flushAll();
+        jedis.select(0);
+        jedis.flushDB();
         jedisPool.returnResource(jedis);
     }
 }
