@@ -159,6 +159,9 @@ public final class JOhm {
             String fieldName = null;
             for (Field field : fields) {
                 field.setAccessible(true);
+                if (JOhmUtils.detectJOhmCollection(field)) {
+                    continue;
+                }
                 JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
                 if (field.isAnnotationPresent(Attribute.class)) {
                     fieldName = field.getName();

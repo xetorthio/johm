@@ -125,6 +125,17 @@ public final class JOhmUtils {
         }
     }
 
+    static boolean detectJOhmCollection(final Field field) {
+        boolean isJOhmCollection = false;
+        if (field.isAnnotationPresent(CollectionList.class)
+                || field.isAnnotationPresent(CollectionSet.class)
+                || field.isAnnotationPresent(CollectionSortedSet.class)
+                || field.isAnnotationPresent(CollectionMap.class)) {
+            isJOhmCollection = true;
+        }
+        return isJOhmCollection;
+    }
+
     @SuppressWarnings("unchecked")
     public static boolean isNullOrEmpty(final Object obj) {
         if (obj == null) {
@@ -206,6 +217,25 @@ public final class JOhmUtils {
     }
 
     static final class Validator {
+        static void checkValidAttribute(final Field field) {
+            Class<?> type = field.getType();
+            if ((type.equals(Byte.class) || type.equals(byte.class))
+                    || type.equals(Character.class) || type.equals(char.class)
+                    || type.equals(Short.class) || type.equals(short.class)
+                    || type.equals(Integer.class) || type.equals(int.class)
+                    || type.equals(Float.class) || type.equals(float.class)
+                    || type.equals(Double.class) || type.equals(double.class)
+                    || type.equals(Long.class) || type.equals(long.class)
+                    || type.equals(Boolean.class) || type.equals(boolean.class)
+                    || type.equals(BigDecimal.class)
+                    || type.equals(BigInteger.class)
+                    || type.equals(String.class)) {
+            } else {
+                throw new JOhmException(field.getType().getSimpleName()
+                        + " is not a JOhm-supported Attribute");
+            }
+        }
+
         static void checkValidReference(final Field field) {
             if (!field.getType().getClass().isInstance(Model.class)) {
                 throw new JOhmException(field.getType().getSimpleName()
@@ -342,6 +372,7 @@ public final class JOhmUtils {
                     throw new JOhmException(field.getType().getSimpleName()
                             + " is an Attribute and a Model which is invalid");
                 }
+                checkValidAttribute(field);
             }
             if (isReference) {
                 checkValidReference(field);
