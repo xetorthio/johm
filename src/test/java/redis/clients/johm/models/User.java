@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import redis.clients.johm.Attribute;
+import redis.clients.johm.Array;
 import redis.clients.johm.CollectionList;
 import redis.clients.johm.CollectionMap;
 import redis.clients.johm.CollectionSet;
@@ -44,6 +45,9 @@ public class User {
     @CollectionSortedSet(of = Item.class, by = "price")
     @Indexed
     private Set<Item> orderedPurchases;
+    @Array(of = Item.class, length = 3)
+    @Indexed
+    private Item[] threeLatestPurchases;
 
     public Integer getId() {
         return id;
@@ -63,6 +67,14 @@ public class User {
 
     public Map<Integer, Item> getFavoritePurchases() {
         return favoritePurchases;
+    }
+
+    public void setThreeLatestPurchases(Item[] threeLatestPurchases) {
+        this.threeLatestPurchases = threeLatestPurchases;
+    }
+
+    public Item[] getThreeLatestPurchases() {
+        return threeLatestPurchases;
     }
 
     public Country getCountry() {

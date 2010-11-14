@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +12,7 @@ import java.util.Set;
 import redis.clients.jedis.JedisException;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
+import redis.clients.johm.collections.RedisArray;
 
 /**
  * JOhm serves as the delegate responsible for heavy-lifting all mapping
@@ -63,9 +65,11 @@ public final class JOhm {
             Map<String, String> hashedObject = nest.cat(id).hgetAll();
             for (Field field : clazz.getDeclaredFields()) {
                 fillField(hashedObject, newInstance, field);
+                fillArrayField(nest, newInstance, field);
             }
             for (Field field : clazz.getSuperclass().getDeclaredFields()) {
                 fillField(hashedObject, newInstance, field);
+                fillArrayField(nest, newInstance, field);
             }
 
             return (T) newInstance;
@@ -155,12 +159,29 @@ public final class JOhm {
         fields.addAll(Arrays.asList(model.getClass().getDeclaredFields()));
         fields.addAll(Arrays.asList(model.getClass().getSuperclass()
                 .getDeclaredFields()));
+        Map<RedisArray<Object>, Object[]> pendingArraysToPersist = null;
         try {
             String fieldName = null;
             for (Field field : fields) {
                 field.setAccessible(true);
-                if (JOhmUtils.detectJOhmCollection(field)) {
+                if (JOhmUtils.detectJOhmCollection(field)
+                        || field.isAnnotationPresent(Id.class)) {
                     continue;
+                }
+                if (field.isAnnotationPresent(Array.class)) {
+                    Object[] backingArray = (Object[]) field.get(model);
+                    int actualLength = backingArray == null ? 0
+                            : backingArray.length;
+                    JOhmUtils.Validator.checkValidArrayBounds(field,
+                            actualLength);
+                    Array annotation = field.getAnnotation(Array.class);
+                    RedisArray<Object> redisArray = new RedisArray<Object>(
+                            annotation.length(), annotation.of(), nest, field,
+                            model);
+                    if (pendingArraysToPersist == null) {
+                        pendingArraysToPersist = new LinkedHashMap<RedisArray<Object>, Object[]>();
+                    }
+                    pendingArraysToPersist.put(redisArray, backingArray);
                 }
                 JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
                 if (field.isAnnotationPresent(Attribute.class)) {
@@ -210,6 +231,14 @@ public final class JOhm {
                 hmset(nest.cat(JOhmUtils.getId(model)).key(), hashedObject);
             }
         });
+
+        if (pendingArraysToPersist != null && pendingArraysToPersist.size() > 0) {
+            for (Map.Entry<RedisArray<Object>, Object[]> arrayEntry : pendingArraysToPersist
+                    .entrySet()) {
+                arrayEntry.getKey().write(arrayEntry.getValue());
+            }
+        }
+
         return (T) model;
     }
 
@@ -231,6 +260,8 @@ public final class JOhm {
         boolean deleted = false;
         Object persistedModel = get(clazz, id);
         if (persistedModel != null) {
+            Nest nest = new Nest(persistedModel);
+            nest.setJedisPool(jedisPool);
             if (deleteChildren) {
                 List<Field> fields = new ArrayList<Field>();
                 fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
@@ -251,12 +282,18 @@ public final class JOhm {
                             throw new JOhmException(e);
                         }
                     }
+                    if (field.isAnnotationPresent(Array.class)) {
+                        field.setAccessible(true);
+                        Array annotation = field.getAnnotation(Array.class);
+                        RedisArray redisArray = new RedisArray(annotation
+                                .length(), annotation.of(), nest, field,
+                                persistedModel);
+                        redisArray.clear();
+                    }
                 }
             }
 
             // now delete parent
-            Nest nest = new Nest(persistedModel);
-            nest.setJedisPool(jedisPool);
             deleted = nest.cat(id).del() == 1;
         }
         return deleted;
@@ -288,6 +325,19 @@ public final class JOhm {
                 Integer referenceId = Integer.valueOf(serializedReferenceId);
                 field.set(newInstance, get(field.getType(), referenceId));
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void fillArrayField(final Nest nest, final Object model,
+            final Field field) throws IllegalArgumentException,
+            IllegalAccessException {
+        if (field.isAnnotationPresent(Array.class)) {
+            field.setAccessible(true);
+            Array annotation = field.getAnnotation(Array.class);
+            RedisArray redisArray = new RedisArray(annotation.length(),
+                    annotation.of(), nest, field, model);
+            field.set(model, redisArray.read());
         }
     }
 

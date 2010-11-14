@@ -161,9 +161,7 @@ public class RedisList<T> implements java.util.List<T> {
 
     @Override
     public int size() {
-        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .llen();
-        return repoSize;
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).llen();
     }
 
     @Override
@@ -183,9 +181,12 @@ public class RedisList<T> implements java.util.List<T> {
     }
 
     private boolean internalAdd(T element) {
-        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .rpush(JOhmUtils.getId(element).toString()) > 0;
-        indexValue(element);
+        boolean success = false;
+        if (element != null) {
+            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                    .rpush(JOhmUtils.getId(element).toString()) > 0;
+            indexValue(element);
+        }
         return success;
     }
 
@@ -204,16 +205,23 @@ public class RedisList<T> implements java.util.List<T> {
     }
 
     private void internalIndexedAdd(int index, T element) {
-        nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(index,
-                JOhmUtils.getId(element).toString());
-        indexValue(element);
+        if (element != null) {
+            nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(index,
+                    JOhmUtils.getId(element).toString());
+            indexValue(element);
+        }
     }
 
     private boolean internalRemove(T element) {
-        Integer lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .lrem(1, JOhmUtils.getId(element).toString());
-        unindexValue(element);
-        return lrem > 0;
+        boolean success = false;
+        if (element != null) {
+            Integer lrem = nest.cat(JOhmUtils.getId(owner))
+                    .cat(field.getName()).lrem(1,
+                            JOhmUtils.getId(element).toString());
+            unindexValue(element);
+            success = lrem > 0;
+        }
+        return success;
     }
 
     private T internalIndexedRemove(int index) {

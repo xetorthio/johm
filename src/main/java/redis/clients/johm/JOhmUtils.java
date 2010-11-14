@@ -190,6 +190,9 @@ public final class JOhmUtils {
             if (type.equals(Long.class) || type.equals(long.class)) {
                 return new Long(value);
             }
+            if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                return new Boolean(value);
+            }
 
             // Higher precision folks
             if (type.equals(BigDecimal.class)) {
@@ -350,6 +353,14 @@ public final class JOhmUtils {
             if (!field.getType().getClass().isInstance(Map.class)) {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a subclass of Map");
+            }
+        }
+
+        static void checkValidArrayBounds(final Field field, int actualLength) {
+            if (field.getAnnotation(Array.class).length() < actualLength) {
+                throw new JOhmException(
+                        field.getType().getSimpleName()
+                                + " has an actual length greater than the expected annotated array bounds");
             }
         }
 

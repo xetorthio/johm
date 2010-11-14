@@ -3,6 +3,7 @@ package redis.clients.johm;
 import org.junit.Test;
 
 import redis.clients.johm.models.Country;
+import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
 public class BasicPersistanceTest extends JOhmTestBase {
@@ -14,16 +15,53 @@ public class BasicPersistanceTest extends JOhmTestBase {
         user = JOhm.save(user);
 
         assertNotNull(user);
-        // assertEquals(11, user.getId());
+        User savedUser = JOhm.get(User.class, user.getId());
+        assertEquals(user.getName(), savedUser.getName());
+        assertNull(savedUser.getRoom());
+        assertEquals(user.getId(), savedUser.getId());
+        assertEquals(user.getAge(), savedUser.getAge());
+    }
+
+    @Test
+    public void saveWithArray() {
+        Item item0 = new Item();
+        item0.setName("Foo0");
+        JOhm.save(item0);
+
+        Item item1 = new Item();
+        item1.setName("Foo1");
+        JOhm.save(item1);
+
+        Item item2 = new Item();
+        item2.setName("Foo2");
+        JOhm.save(item2);
+
+        User user = new User();
+        user.setName("foo");
+        user.setRoom("vroom");
+        user.setThreeLatestPurchases(new Item[] { item0, item1, item2 });
+        user = JOhm.save(user);
+
+        assertNotNull(user);
         User savedUser = JOhm.get(User.class, user.getId());
         assertEquals(user.getName(), savedUser.getName());
         assertNull(savedUser.getRoom());
         assertEquals(user.getId(), savedUser.getId());
         assertEquals(user.getAge(), savedUser.getAge());
 
-        // cleanup now
-        assertTrue(JOhm.delete(User.class, user.getId()));
-        assertNull(JOhm.get(User.class, user.getId()));
+        Item[] saved = savedUser.getThreeLatestPurchases();
+        assertEquals(3, saved.length);
+        assertEquals(item0.getId(), saved[0].getId());
+        assertEquals(item0.getName(), saved[0].getName());
+        assertEquals(item1.getId(), saved[1].getId());
+        assertEquals(item1.getName(), saved[1].getName());
+        assertEquals(item2.getId(), saved[2].getId());
+        assertEquals(item2.getName(), saved[2].getName());
+
+        assertTrue(JOhm.delete(User.class, savedUser.getId(), true));
+        assertTrue(JOhm.delete(Item.class, item0.getId()));
+        assertTrue(JOhm.delete(Item.class, item1.getId()));
+        assertTrue(JOhm.delete(Item.class, item2.getId()));
     }
 
     @Test
@@ -127,7 +165,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
         user.setCountry(new Country());
         JOhm.save(user);
     }
-    
+
     @Test(expected = JOhmException.class)
     public void shouldNotPersistWithoutModel() {
         Nest<String> dummyNest = new Nest<String>();

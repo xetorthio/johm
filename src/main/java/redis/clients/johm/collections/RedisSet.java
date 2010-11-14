@@ -136,16 +136,22 @@ public class RedisSet<T> implements Set<T> {
     }
 
     private boolean internalAdd(T element) {
-        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .sadd(JOhmUtils.getId(element).toString()) > 0;
-        indexValue(element);
+        boolean success = false;
+        if (element != null) {
+            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                    .sadd(JOhmUtils.getId(element).toString()) > 0;
+            indexValue(element);
+        }
         return success;
     }
 
     private boolean internalRemove(T element) {
-        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .srem(JOhmUtils.getId(element).toString()) > 0;
-        unindexValue(element);
+        boolean success = false;
+        if (element != null) {
+            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                    .srem(JOhmUtils.getId(element).toString()) > 0;
+            unindexValue(element);
+        }
         return success;
     }
 
