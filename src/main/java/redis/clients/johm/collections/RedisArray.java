@@ -82,7 +82,7 @@ public class RedisArray<T> {
         String id = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(id)) {
-            element = JOhm.get(clazz, Integer.valueOf(id));
+            element = JOhm.<T> get(clazz, Integer.valueOf(id));
         }
         return element;
     }
