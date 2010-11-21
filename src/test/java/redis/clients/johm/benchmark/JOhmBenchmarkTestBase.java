@@ -9,7 +9,7 @@ class JOhmBenchmarkTestBase extends JOhmTestBase {
             long elapsed) {
         StringBuilder stats = new StringBuilder();
         stats.append("[").append(test).append("]");
-        stats.append(" totalOps=").append(totalOps);
+        stats.append(" totalOps=").append((opTypes * totalOps));
         stats.append(", opTypes=").append(opTypes);
         stats.append(", thruput=")
                 .append((1000 * opTypes * totalOps) / elapsed).append(

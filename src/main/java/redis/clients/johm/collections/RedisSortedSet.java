@@ -59,33 +59,39 @@ public class RedisSortedSet<T> implements Set<T> {
 
     private boolean internalAdd(T element) {
         boolean success = false;
-        try {
-            Field byField = element.getClass().getDeclaredField(byFieldName);
-            byField.setAccessible(true);
-            Object fieldValue = byField.get(element);
-            if (fieldValue == null) {
-                fieldValue = 0f;
+        if (element != null) {
+            try {
+                Field byField = element.getClass()
+                        .getDeclaredField(byFieldName);
+                byField.setAccessible(true);
+                Object fieldValue = byField.get(element);
+                if (fieldValue == null) {
+                    fieldValue = 0f;
+                }
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .zadd(Float.class.cast(fieldValue),
+                                JOhmUtils.getId(element).toString()) > 0;
+                indexValue(element);
+            } catch (SecurityException e) {
+                throw new JOhmException(e);
+            } catch (IllegalArgumentException e) {
+                throw new JOhmException(e);
+            } catch (IllegalAccessException e) {
+                throw new JOhmException(e);
+            } catch (NoSuchFieldException e) {
+                throw new JOhmException(e);
             }
-            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                    .zadd(Float.class.cast(fieldValue),
-                            JOhmUtils.getId(element).toString()) > 0;
-            indexValue(element);
-        } catch (SecurityException e) {
-            throw new JOhmException(e);
-        } catch (IllegalArgumentException e) {
-            throw new JOhmException(e);
-        } catch (IllegalAccessException e) {
-            throw new JOhmException(e);
-        } catch (NoSuchFieldException e) {
-            throw new JOhmException(e);
         }
         return success;
     }
 
     private boolean internalRemove(T element) {
-        boolean success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .srem(JOhmUtils.getId(element).toString()) > 0;
-        unindexValue(element);
+        boolean success = false;
+        if (element != null) {
+            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                    .srem(JOhmUtils.getId(element).toString()) > 0;
+            unindexValue(element);
+        }
         return success;
     }
 

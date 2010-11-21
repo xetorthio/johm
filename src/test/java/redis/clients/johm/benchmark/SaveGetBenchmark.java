@@ -10,7 +10,7 @@ public class SaveGetBenchmark extends JOhmBenchmarkTestBase {
     public void saveGetModel() {
         int totalOps = 5000;
         timer.begin();
-        for (int n = 0; n <= totalOps; n++) {
+        for (int n = 0; n < totalOps; n++) {
             User user = new User();
             user.setName("foo" + n);
             user.setRoom("vroom" + n);

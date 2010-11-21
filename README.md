@@ -10,10 +10,11 @@ Right now it is still in development. So just the following features are availab
 - Basic attribute persistence (String, Integer, etc...)
 - Auto-numeric Ids
 - References
+- Arrays
 - Indexes
 - Deletion
 - List, Set, SortedSet and Map relationship
-- Search on attributes, collections and references
+- Search on attributes, arrays, collections and references
 
 Stay close! It is growing pretty fast!
 
@@ -33,11 +34,23 @@ And this is a small example (getters and setters are not included for the sake o
     	@Indexed
     	private int age;
     	@Reference
+    	@Indexed
     	private Country country;
     	@CollectionList(of = Comment.class)
+    	@Indexed
     	private List<Comment> comments;
     	@CollectionSet(of = Item.class)
+    	@Indexed
     	private Set<Item> purchases;
+    	@CollectionMap(key = Integer.class, value = Item.class)
+        @Indexed
+        private Map<Integer, Item> favoritePurchases;
+        @CollectionSortedSet(of = Item.class, by = "price")
+        @Indexed
+        private Set<Item> orderedPurchases;
+        @Array(of = Item.class, length = 3)
+        @Indexed
+        private Item[] threeLatestPurchases;
     }
 
     @Model

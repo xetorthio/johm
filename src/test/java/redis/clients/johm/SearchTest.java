@@ -125,6 +125,45 @@ public class SearchTest extends JOhmTestBase {
     }
 
     @Test
+    public void canSearchOnArrays() {
+        Item item0 = new Item();
+        item0.setName("Foo0");
+        JOhm.save(item0);
+
+        Item item1 = new Item();
+        item1.setName("Foo1");
+        JOhm.save(item1);
+
+        Item item2 = new Item();
+        item2.setName("Foo2");
+        JOhm.save(item2);
+
+        User user1 = new User();
+        user1.setName("foo");
+        user1.setThreeLatestPurchases(new Item[] { item0, item1, item2 });
+        JOhm.save(user1);
+
+        User user2 = new User();
+        user2.setName("car");
+        JOhm.save(user2);
+
+        List<User> users = JOhm.find(User.class, "threeLatestPurchases", item0
+                .getId());
+        assertEquals(1, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+
+        User user3 = new User();
+        user3.setName("foo");
+        user3.setThreeLatestPurchases(new Item[] { item0, item1, item2 });
+        JOhm.save(user3);
+
+        users = JOhm.find(User.class, "threeLatestPurchases", item0.getId());
+        assertEquals(2, users.size());
+        assertEquals(user1.getId(), users.get(0).getId());
+        assertEquals(user3.getId(), users.get(1).getId());
+    }
+
+    @Test
     public void canSearchOnSets() {
         Item item = new Item();
         item.setName("bar");
