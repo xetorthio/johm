@@ -156,9 +156,9 @@ public class Nest<T> {
         return hlen;
     }
 
-    public List<String> hkeys() {
+    public Set<String> hkeys() {
         Jedis jedis = getResource();
-        List<String> hkeys = jedis.hkeys(key());
+        Set<String> hkeys = jedis.hkeys(key());
         returnResource(jedis);
         return hkeys;
     }
