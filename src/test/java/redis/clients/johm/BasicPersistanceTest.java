@@ -1,5 +1,7 @@
 package redis.clients.johm;
 
+import java.util.Set;
+
 import org.junit.Test;
 
 import redis.clients.johm.models.Country;
@@ -195,5 +197,18 @@ public class BasicPersistanceTest extends JOhmTestBase {
         assertNotNull(savedUser.getCountry());
         assertEquals(somewhere.getId(), savedUser.getCountry().getId());
         assertEquals(somewhere.getName(), savedUser.getCountry().getName());
+    }
+
+    @Test
+    public void getAll() {
+        User user = new User();
+        user.setName("foo");
+        JOhm.save(user);
+        user = new User();
+        user.setName("foo1");
+        JOhm.save(user);
+
+        Set<User> users = JOhm.getAll(User.class);
+        assertEquals(2, users.size());
     }
 }

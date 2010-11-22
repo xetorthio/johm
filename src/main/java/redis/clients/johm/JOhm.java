@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,7 +148,7 @@ public final class JOhm {
      * @return
      */
     public static <T> T save(final Object model) {
-        return JOhm.<T>save(model, false);
+        return JOhm.<T> save(model, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -218,6 +219,8 @@ public final class JOhm {
                                 String.valueOf(JOhmUtils.getId(model)));
                     }
                 }
+                // always add to the all set, to support getAll
+                nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
             }
         } catch (IllegalArgumentException e) {
             throw new JOhmException(e);
@@ -355,4 +358,23 @@ public final class JOhm {
         return nest;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> Set<T> getAll(Class<?> clazz) {
+        JOhmUtils.Validator.checkValidModelClazz(clazz);
+        Set<Object> results = null;
+        Nest nest = new Nest(clazz);
+        nest.setJedisPool(jedisPool);
+        Set<String> modelIdStrings = nest.cat("all").smembers();
+        if (modelIdStrings != null) {
+            results = new HashSet<Object>();
+            Object indexed = null;
+            for (String modelIdString : modelIdStrings) {
+                indexed = get(clazz, Integer.parseInt(modelIdString));
+                if (indexed != null) {
+                    results.add(indexed);
+                }
+            }
+        }
+        return (Set<T>) results;
+    }
 }
