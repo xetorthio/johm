@@ -48,7 +48,7 @@ public class RedisArray<T> {
     }
 
     public void write(T[] backingArray) {
-        if (backingArray == null) {
+        if (backingArray == null || backingArray.length == 0) {
             clear();
         } else {
             for (int iter = 0; iter < backingArray.length; iter++) {
