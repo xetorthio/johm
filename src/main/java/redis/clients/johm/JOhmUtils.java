@@ -163,6 +163,10 @@ public final class JOhmUtils {
             }
             if (type.equals(Character.class) || type.equals(char.class)) {
                 if (!isNullOrEmpty(value)) {
+                    if (value.length() > 1) {
+                        throw new IllegalArgumentException(
+                                "Non-character value masquerading as characters in a string");
+                    }
                     return value.charAt(0);
                 } else {
                     // This is the default value
@@ -202,17 +206,19 @@ public final class JOhmUtils {
                 return new BigInteger(value);
             }
 
-            if (type.isEnum()) {
+            if (type.isEnum() || type.equals(Enum.class)) {
                 // return Enum.valueOf(type, value);
                 return null; // TODO: handle these
             }
 
-            // Collections not yet supported
+            // Raw Collections are unsupported
             if (type.equals(Collection.class)) {
-                return null; // TODO: handle these
+                return null;
             }
+
+            // Raw arrays are unsupported
             if (type.isArray()) {
-                return null; // TODO: handle these
+                return null;
             }
 
             return value;
