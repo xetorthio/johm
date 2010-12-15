@@ -254,17 +254,47 @@ public final class JOhm {
      * @return
      */
     public static boolean delete(Class<?> clazz, int id) {
-        return delete(clazz, id, false);
+        return delete(clazz, id, true, false);
     }
 
     @SuppressWarnings("unchecked")
-    public static boolean delete(Class<?> clazz, int id, boolean deleteChildren) {
+    public static boolean delete(Class<?> clazz, int id, boolean deleteIndexes,
+            boolean deleteChildren) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
         boolean deleted = false;
         Object persistedModel = get(clazz, id);
         if (persistedModel != null) {
             Nest nest = new Nest(persistedModel);
             nest.setJedisPool(jedisPool);
+            if (deleteIndexes) {
+                // think about promoting deleteChildren as default behavior so
+                // that this field lookup gets folded into that
+                // if-deleteChildren block
+                List<Field> fields = new ArrayList<Field>();
+                fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+                fields.addAll(Arrays.asList(clazz.getSuperclass()
+                        .getDeclaredFields()));
+                for (Field field : fields) {
+                    if (field.isAnnotationPresent(Indexed.class)) {
+                        field.setAccessible(true);
+                        Object fieldValue = null;
+                        try {
+                            fieldValue = field.get(persistedModel);
+                        } catch (IllegalArgumentException e) {
+                            throw new JOhmException(e);
+                        } catch (IllegalAccessException e) {
+                            throw new JOhmException(e);
+                        }
+                        if (fieldValue != null
+                                && field.isAnnotationPresent(Reference.class)) {
+                            fieldValue = JOhmUtils.getId(fieldValue);
+                        }
+                        if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
+                            nest.cat(field.getName()).cat(fieldValue).del();
+                        }
+                    }
+                }
+            }
             if (deleteChildren) {
                 List<Field> fields = new ArrayList<Field>();
                 fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
@@ -277,7 +307,8 @@ public final class JOhm {
                             Object child = field.get(persistedModel);
                             if (child != null) {
                                 delete(child.getClass(),
-                                        JOhmUtils.getId(child), deleteChildren); // children
+                                        JOhmUtils.getId(child), deleteIndexes,
+                                        deleteChildren); // children
                             }
                         } catch (IllegalArgumentException e) {
                             throw new JOhmException(e);
