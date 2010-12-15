@@ -254,4 +254,39 @@ public class SearchTest extends JOhmTestBase {
         assertEquals(user1.getId(), users.get(0).getId());
         assertEquals(user2.getId(), users.get(1).getId());
     }
+
+    @Test
+    public void cannotSearchAfterDeletingIndexes() {
+        User user = new User();
+        user.setAge(88);
+        JOhm.save(user);
+
+        user.setAge(77); // younger
+        JOhm.save(user);
+
+        user.setAge(66); // younger still
+        JOhm.save(user);
+
+        int id = user.getId();
+
+        assertNotNull(JOhm.get(User.class, id));
+
+        List<User> users = JOhm.find(User.class, "age", 88);
+        assertEquals(1, users.size());
+        users = JOhm.find(User.class, "age", 77);
+        assertEquals(1, users.size());
+        users = JOhm.find(User.class, "age", 66);
+        assertEquals(1, users.size());
+
+        JOhm.delete(User.class, id);
+
+        users = JOhm.find(User.class, "age", 88);
+        assertEquals(0, users.size());
+        users = JOhm.find(User.class, "age", 77);
+        assertEquals(0, users.size());
+        users = JOhm.find(User.class, "age", 66);
+        assertEquals(0, users.size());
+
+        assertNull(JOhm.get(User.class, id));
+    }
 }

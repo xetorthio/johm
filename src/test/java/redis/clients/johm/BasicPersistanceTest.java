@@ -60,7 +60,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
         assertEquals(item2.getId(), saved[2].getId());
         assertEquals(item2.getName(), saved[2].getName());
 
-        assertTrue(JOhm.delete(User.class, savedUser.getId(), true));
+        assertTrue(JOhm.delete(User.class, savedUser.getId(), true, true));
         assertTrue(JOhm.delete(Item.class, item0.getId()));
         assertTrue(JOhm.delete(Item.class, item1.getId()));
         assertTrue(JOhm.delete(Item.class, item2.getId()));
