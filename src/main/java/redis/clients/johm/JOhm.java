@@ -153,6 +153,9 @@ public final class JOhm {
 
     @SuppressWarnings("unchecked")
     public static <T> T save(final Object model, boolean saveChildren) {
+        if (!isNew(model)) {
+            delete(model.getClass(), JOhmUtils.getId(model));
+        }
         final Nest nest = initIfNeeded(model);
 
         final Map<String, String> hashedObject = new HashMap<String, String>();
@@ -290,7 +293,8 @@ public final class JOhm {
                             fieldValue = JOhmUtils.getId(fieldValue);
                         }
                         if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
-                            nest.cat(field.getName()).cat(fieldValue).del();
+                            nest.cat(field.getName()).cat(fieldValue).srem(
+                                    String.valueOf(id));
                         }
                     }
                 }

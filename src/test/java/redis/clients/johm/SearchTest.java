@@ -272,9 +272,9 @@ public class SearchTest extends JOhmTestBase {
         assertNotNull(JOhm.get(User.class, id));
 
         List<User> users = JOhm.find(User.class, "age", 88);
-        assertEquals(1, users.size());
+        assertEquals(0, users.size()); // index already updated
         users = JOhm.find(User.class, "age", 77);
-        assertEquals(1, users.size());
+        assertEquals(0, users.size()); // index already updated
         users = JOhm.find(User.class, "age", 66);
         assertEquals(1, users.size());
 
