@@ -67,7 +67,9 @@ public class RedisArray<T> {
         if (element != null) {
             success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                     .rpush(JOhmUtils.getId(element).toString()) > 0;
-            indexValue(element);
+            if (isIndexed) {
+                indexValue(element);
+            }
         }
         return success;
     }
