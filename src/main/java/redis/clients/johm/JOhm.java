@@ -2,7 +2,6 @@ package redis.clients.johm;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -64,11 +63,7 @@ public final class JOhm {
             JOhmUtils.initCollections(newInstance, nest);
 
             Map<String, String> hashedObject = nest.cat(id).hgetAll();
-            for (Field field : clazz.getDeclaredFields()) {
-                fillField(hashedObject, newInstance, field);
-                fillArrayField(nest, newInstance, field);
-            }
-            for (Field field : clazz.getSuperclass().getDeclaredFields()) {
+            for (Field field : JOhmUtils.gatherAllFields(clazz)) {
                 fillField(hashedObject, newInstance, field);
                 fillArrayField(nest, newInstance, field);
             }
@@ -159,14 +154,10 @@ public final class JOhm {
         final Nest nest = initIfNeeded(model);
 
         final Map<String, String> hashedObject = new HashMap<String, String>();
-        List<Field> fields = new ArrayList<Field>();
-        fields.addAll(Arrays.asList(model.getClass().getDeclaredFields()));
-        fields.addAll(Arrays.asList(model.getClass().getSuperclass()
-                .getDeclaredFields()));
         Map<RedisArray<Object>, Object[]> pendingArraysToPersist = null;
         try {
             String fieldName = null;
-            for (Field field : fields) {
+            for (Field field : JOhmUtils.gatherAllFields(model.getClass())) {
                 field.setAccessible(true);
                 if (JOhmUtils.detectJOhmCollection(field)
                         || field.isAnnotationPresent(Id.class)) {
@@ -273,11 +264,7 @@ public final class JOhm {
                 // think about promoting deleteChildren as default behavior so
                 // that this field lookup gets folded into that
                 // if-deleteChildren block
-                List<Field> fields = new ArrayList<Field>();
-                fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
-                fields.addAll(Arrays.asList(clazz.getSuperclass()
-                        .getDeclaredFields()));
-                for (Field field : fields) {
+                for (Field field : JOhmUtils.gatherAllFields(clazz)) {
                     if (field.isAnnotationPresent(Indexed.class)) {
                         field.setAccessible(true);
                         Object fieldValue = null;
@@ -300,11 +287,7 @@ public final class JOhm {
                 }
             }
             if (deleteChildren) {
-                List<Field> fields = new ArrayList<Field>();
-                fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
-                fields.addAll(Arrays.asList(clazz.getSuperclass()
-                        .getDeclaredFields()));
-                for (Field field : fields) {
+                for (Field field : JOhmUtils.gatherAllFields(clazz)) {
                     if (field.isAnnotationPresent(Reference.class)) {
                         field.setAccessible(true);
                         try {
