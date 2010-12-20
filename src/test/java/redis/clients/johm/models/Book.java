@@ -39,7 +39,7 @@ public class Book extends Item {
         return yearOfPublication;
     }
 
-    public void setYearOfPublication() {
+    public void setYearOfPublication(short yearOfPublication) {
         this.yearOfPublication = yearOfPublication;
     }
 }
