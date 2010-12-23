@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -138,6 +139,28 @@ public final class JOhmUtils {
         return isJOhmCollection;
     }
 
+    public static JOhmCollectionDataType detectJOhmCollectionDataType(
+            final Class<?> dataClazz) {
+        JOhmCollectionDataType type = null;
+        if (Validator.checkSupportedPrimitiveClazz(dataClazz)) {
+            type = JOhmCollectionDataType.PRIMITIVE;
+        } else {
+            try {
+                Validator.checkValidModelClazz(dataClazz);
+                type = JOhmCollectionDataType.MODEL;
+            } catch (JOhmException exception) {
+                // drop it
+            }
+        }
+
+        if (type == null) {
+            throw new JOhmException(dataClazz.getSimpleName()
+                    + " is not a supported JOhm Collection Data Type");
+        }
+
+        return type;
+    }
+
     @SuppressWarnings("unchecked")
     public static boolean isNullOrEmpty(final Object obj) {
         if (obj == null) {
@@ -164,6 +187,10 @@ public final class JOhmUtils {
         }
 
         return Collections.unmodifiableList(allFields);
+    }
+
+    public static enum JOhmCollectionDataType {
+        PRIMITIVE, MODEL;
     }
 
     public final static class Convertor {
@@ -409,5 +436,33 @@ public final class JOhmUtils {
                 checkValidReference(field);
             }
         }
+
+        public static boolean checkSupportedPrimitiveClazz(
+                final Class<?> primitiveClazz) {
+            return JOHM_SUPPORTED_PRIMITIVES.contains(primitiveClazz);
+        }
+    }
+
+    private static final Set<Class<?>> JOHM_SUPPORTED_PRIMITIVES = new HashSet<Class<?>>();
+    static {
+        JOHM_SUPPORTED_PRIMITIVES.add(String.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Byte.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(byte.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Character.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(char.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Short.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(short.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Integer.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(int.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Float.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(float.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Double.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(double.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Long.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(long.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Boolean.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
     }
 }
