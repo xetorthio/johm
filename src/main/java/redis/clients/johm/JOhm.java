@@ -161,6 +161,9 @@ public final class JOhm {
                 field.setAccessible(true);
                 if (JOhmUtils.detectJOhmCollection(field)
                         || field.isAnnotationPresent(Id.class)) {
+                    if (field.isAnnotationPresent(Id.class)) {
+                        JOhmUtils.Validator.checkValidIdType(field);
+                    }
                     continue;
                 }
                 if (field.isAnnotationPresent(Array.class)) {

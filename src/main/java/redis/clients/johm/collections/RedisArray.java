@@ -7,6 +7,8 @@ import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Nest;
+import redis.clients.johm.JOhmUtils.Convertor;
+import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
 
 /**
  * RedisArray is a JOhm-internal 1-Dimensional Array implementation to serve as
@@ -19,10 +21,13 @@ import redis.clients.johm.Nest;
  * own array allocation using the 'new' keyword. This mode of usage makes the
  * RedisArray somewhat of a bridge case between say an Attribute and a dynamic
  * collection like RedisList.
+ * 
+ * RedisArray does not support null data elements.
  */
 public class RedisArray<T> {
     private final int length;
-    private final Class<? extends T> clazz;
+    private final Class<? extends T> elementClazz;
+    private final JOhmCollectionDataType johmElementType;
     private final Nest<? extends T> nest;
     private final Field field;
     private final Object owner;
@@ -31,7 +36,8 @@ public class RedisArray<T> {
     public RedisArray(int length, Class<? extends T> clazz,
             Nest<? extends T> nest, Field field, Object owner) {
         this.length = length;
-        this.clazz = clazz;
+        this.elementClazz = clazz;
+        johmElementType = JOhmUtils.detectJOhmCollectionDataType(clazz);
         this.nest = nest;
         this.field = field;
         isIndexed = field.isAnnotationPresent(Indexed.class);
@@ -40,9 +46,9 @@ public class RedisArray<T> {
 
     @SuppressWarnings("unchecked")
     public T[] read() {
-        T[] streamed = (T[]) Array.newInstance(clazz, length);
+        T[] streamed = (T[]) Array.newInstance(elementClazz, length);
         for (int iter = 0; iter < length; iter++) {
-            streamed[iter] = clazz.cast(get(iter));
+            streamed[iter] = elementClazz.cast(get(iter));
         }
         return streamed;
     }
@@ -65,8 +71,13 @@ public class RedisArray<T> {
     private boolean save(T element) {
         boolean success = false;
         if (element != null) {
-            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                    .rpush(JOhmUtils.getId(element).toString()) > 0;
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .rpush(element.toString()) > 0;
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .rpush(JOhmUtils.getId(element).toString()) > 0;
+            }
             if (isIndexed) {
                 indexValue(element);
             }
@@ -79,36 +90,56 @@ public class RedisArray<T> {
         internalDelete(element);
     }
 
+    @SuppressWarnings("unchecked")
     private T get(int index) {
         T element = null;
-        String id = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+        String key = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .lindex(index);
-        if (!JOhmUtils.isNullOrEmpty(id)) {
-            element = JOhm.<T> get(clazz, Integer.valueOf(id));
+        if (!JOhmUtils.isNullOrEmpty(key)) {
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                element = (T) Convertor.convert(elementClazz, key);
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                element = JOhm.<T> get(elementClazz, Integer.valueOf(key));
+            }
         }
         return element;
     }
 
     private void indexValue(T element) {
-        nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
-                JOhmUtils.getId(owner).toString());
+        if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+            nest.cat(field.getName()).cat(element.toString()).sadd(
+                    JOhmUtils.getId(owner).toString());
+        } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
+                    JOhmUtils.getId(owner).toString());
+        }
     }
 
     private void unindexValue(T element) {
-        nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
-                JOhmUtils.getId(owner).toString());
+        if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+            nest.cat(field.getName()).cat(element.toString()).srem(
+                    JOhmUtils.getId(owner).toString());
+        } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
+                    JOhmUtils.getId(owner).toString());
+        }
     }
 
     private boolean internalDelete(T element) {
         if (element == null) {
             return false;
         }
-        Integer lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .lrem(1, JOhmUtils.getId(element).toString());
+        Integer lrem = 0;
+        if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+            lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lrem(
+                    1, element.toString());
+        } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+            lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lrem(
+                    1, JOhmUtils.getId(element).toString());
+        }
         if (isIndexed) {
             unindexValue(element);
         }
         return lrem > 0;
     }
-
 }

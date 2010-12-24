@@ -10,6 +10,8 @@ import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Nest;
+import redis.clients.johm.JOhmUtils.Convertor;
+import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
 
 /**
  * RedisSet is a JOhm-internal Set implementation to serve as a proxy for the
@@ -18,16 +20,20 @@ import redis.clients.johm.Nest;
  * but does so without any locking and is not thread-safe. It also maintains
  * whatever order in which Redis returns its set elements. Only add and remove
  * trigger a remote-sync of local internal storage.
+ * 
+ * RedisSet does not support null data elements.
  */
 public class RedisSet<T> implements Set<T> {
     private final Nest<? extends T> nest;
-    private final Class<? extends T> clazz;
+    private final Class<? extends T> elementClazz;
+    private final JOhmCollectionDataType johmElementType;
     private final Object owner;
     private final Field field;
 
     public RedisSet(final Class<? extends T> clazz,
             final Nest<? extends T> nest, Field field, Object owner) {
-        this.clazz = clazz;
+        this.elementClazz = clazz;
+        johmElementType = JOhmUtils.detectJOhmCollectionDataType(clazz);
         this.nest = nest;
         this.field = field;
         this.owner = owner;
@@ -35,23 +41,32 @@ public class RedisSet<T> implements Set<T> {
 
     private void indexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
-                    JOhmUtils.getId(owner).toString());
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                nest.cat(field.getName()).cat(element.toString()).sadd(
+                        JOhmUtils.getId(owner).toString());
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
+                        JOhmUtils.getId(owner).toString());
+            }
         }
     }
 
     private void unindexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
-                    JOhmUtils.getId(owner).toString());
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                nest.cat(field.getName()).cat(element.toString()).srem(
+                        JOhmUtils.getId(owner).toString());
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
+                        JOhmUtils.getId(owner).toString());
+            }
         }
     }
 
     @Override
     public int size() {
-        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .smembers().size();
-        return repoSize;
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).smembers()
+                .size();
     }
 
     @Override
@@ -138,8 +153,13 @@ public class RedisSet<T> implements Set<T> {
     private boolean internalAdd(T element) {
         boolean success = false;
         if (element != null) {
-            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                    .sadd(JOhmUtils.getId(element).toString()) > 0;
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .sadd(element.toString()) > 0;
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .sadd(JOhmUtils.getId(element).toString()) > 0;
+            }
             indexValue(element);
         }
         return success;
@@ -148,8 +168,13 @@ public class RedisSet<T> implements Set<T> {
     private boolean internalRemove(T element) {
         boolean success = false;
         if (element != null) {
-            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                    .srem(JOhmUtils.getId(element).toString()) > 0;
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .srem(element.toString()) > 0;
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .srem(JOhmUtils.getId(element).toString()) > 0;
+            }
             unindexValue(element);
         }
         return success;
@@ -157,11 +182,15 @@ public class RedisSet<T> implements Set<T> {
 
     @SuppressWarnings("unchecked")
     private synchronized Set<T> scrollElements() {
-        Set<String> ids = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .smembers();
+        Set<String> keys = nest.cat(JOhmUtils.getId(owner))
+                .cat(field.getName()).smembers();
         Set<T> elements = new HashSet<T>();
-        for (String id : ids) {
-            elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
+        for (String key : keys) {
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                elements.add((T) Convertor.convert(elementClazz, key));
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
+            }
         }
         return elements;
     }

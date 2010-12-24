@@ -11,6 +11,8 @@ import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Nest;
+import redis.clients.johm.JOhmUtils.Convertor;
+import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
 
 /**
  * RedisList is a JOhm-internal List implementation to serve as a proxy for the
@@ -18,16 +20,20 @@ import redis.clients.johm.Nest;
  * network traffic. It does a best-effort job of minimizing list entity
  * staleness but does so without any locking and is not thread-safe. Only add
  * and remove operations trigger a remote-sync of local internal storage.
+ * 
+ * RedisList does not support null elements.
  */
 public class RedisList<T> implements java.util.List<T> {
     private final Nest<? extends T> nest;
-    private final Class<? extends T> clazz;
+    private final Class<? extends T> elementClazz;
+    private final JOhmCollectionDataType johmElementType;
     private final Field field;
     private final Object owner;
 
     public RedisList(Class<? extends T> clazz, Nest<? extends T> nest,
             Field field, Object owner) {
-        this.clazz = clazz;
+        this.elementClazz = clazz;
+        johmElementType = JOhmUtils.detectJOhmCollectionDataType(clazz);
         this.nest = nest;
         this.field = field;
         this.owner = owner;
@@ -75,13 +81,18 @@ public class RedisList<T> implements java.util.List<T> {
         return scrollElements().containsAll(c);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T get(int index) {
         T element = null;
-        String id = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+        String key = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .lindex(index);
-        if (!JOhmUtils.isNullOrEmpty(id)) {
-            element = JOhm.<T>get(clazz, Integer.valueOf(id));
+        if (!JOhmUtils.isNullOrEmpty(key)) {
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                element = (T) Convertor.convert(elementClazz, key);
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                element = JOhm.<T> get(elementClazz, Integer.valueOf(key));
+            }
         }
         return element;
     }
@@ -183,8 +194,13 @@ public class RedisList<T> implements java.util.List<T> {
     private boolean internalAdd(T element) {
         boolean success = false;
         if (element != null) {
-            success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                    .rpush(JOhmUtils.getId(element).toString()) > 0;
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .rpush(element.toString()) > 0;
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                success = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .rpush(JOhmUtils.getId(element).toString()) > 0;
+            }
             indexValue(element);
         }
         return success;
@@ -192,22 +208,37 @@ public class RedisList<T> implements java.util.List<T> {
 
     private void indexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
-                    JOhmUtils.getId(owner).toString());
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                nest.cat(field.getName()).cat(element.toString()).sadd(
+                        JOhmUtils.getId(owner).toString());
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                nest.cat(field.getName()).cat(JOhmUtils.getId(element)).sadd(
+                        JOhmUtils.getId(owner).toString());
+            }
         }
     }
 
     private void unindexValue(T element) {
         if (field.isAnnotationPresent(Indexed.class)) {
-            nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
-                    JOhmUtils.getId(owner).toString());
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                nest.cat(field.getName()).cat(element.toString()).srem(
+                        JOhmUtils.getId(owner).toString());
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                nest.cat(field.getName()).cat(JOhmUtils.getId(element)).srem(
+                        JOhmUtils.getId(owner).toString());
+            }
         }
     }
 
     private void internalIndexedAdd(int index, T element) {
         if (element != null) {
-            nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(index,
-                    JOhmUtils.getId(element).toString());
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(
+                        index, element.toString());
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(
+                        index, JOhmUtils.getId(element).toString());
+            }
             indexValue(element);
         }
     }
@@ -215,9 +246,14 @@ public class RedisList<T> implements java.util.List<T> {
     private boolean internalRemove(T element) {
         boolean success = false;
         if (element != null) {
-            Integer lrem = nest.cat(JOhmUtils.getId(owner))
-                    .cat(field.getName()).lrem(1,
-                            JOhmUtils.getId(element).toString());
+            Integer lrem = 0;
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .lrem(1, element.toString());
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
+                        .lrem(1, JOhmUtils.getId(element).toString());
+            }
             unindexValue(element);
             success = lrem > 0;
         }
@@ -234,10 +270,14 @@ public class RedisList<T> implements java.util.List<T> {
     private synchronized List<T> scrollElements() {
         List<T> elements = new ArrayList<T>();
 
-        List<String> ids = nest.cat(JOhmUtils.getId(owner))
-                .cat(field.getName()).lrange(0, -1);
-        for (String id : ids) {
-            elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
+        List<String> keys = nest.cat(JOhmUtils.getId(owner)).cat(
+                field.getName()).lrange(0, -1);
+        for (String key : keys) {
+            if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
+                elements.add((T) Convertor.convert(elementClazz, key));
+            } else if (johmElementType == JOhmCollectionDataType.MODEL) {
+                elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
+            }
         }
         return elements;
     }
