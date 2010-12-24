@@ -299,10 +299,10 @@ public final class JOhmUtils {
             for (Field field : model.getClass().getDeclaredFields()) {
                 field.setAccessible(true);
                 if (field.isAnnotationPresent(Id.class)) {
-                    idFieldPresent = true;
                     Validator.checkValidIdType(field);
                     try {
                         id = (Integer) field.get(model);
+                        idFieldPresent = true;
                     } catch (IllegalArgumentException e) {
                         throw new JOhmException(e);
                     } catch (IllegalAccessException e) {
@@ -319,6 +319,10 @@ public final class JOhmUtils {
         }
 
         static void checkValidIdType(final Field field) {
+            if (field.getAnnotations().length > 1) {
+                throw new JOhmException(
+                        "Element annotated @Id cannot have any other annotations");
+            }
             Class<?> type = field.getType().getClass();
             if (!type.isInstance(Integer.class) || !type.isInstance(int.class)) {
                 throw new JOhmException(field.getType().getSimpleName()
