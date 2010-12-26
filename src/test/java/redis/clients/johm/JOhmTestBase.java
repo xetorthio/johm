@@ -2,6 +2,7 @@ package redis.clients.johm;
 
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.pool.impl.GenericObjectPool.Config;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -20,13 +21,11 @@ public class JOhmTestBase extends Assert {
 
     protected void startJedisEngine() throws TimeoutException {
         if (benchmarkMode) {
-            jedisPool = new JedisPool("localhost", Protocol.DEFAULT_PORT, 2000);
-            jedisPool.setResourcesNumber(50);
-            jedisPool.setDefaultPoolWait(1000000);
+            jedisPool = new JedisPool(new Config(), "localhost",
+                    Protocol.DEFAULT_PORT, 2000);
         } else {
-            jedisPool = new JedisPool("localhost");
+            jedisPool = new JedisPool(new Config(), "localhost");
         }
-        jedisPool.init();
         JOhm.setPool(jedisPool);
         purgeRedis();
     }

@@ -65,7 +65,7 @@ public class RedisArray<T> {
     }
 
     public int clear() {
-        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del().intValue();
     }
 
     private boolean save(T element) {
@@ -132,10 +132,10 @@ public class RedisArray<T> {
         Integer lrem = 0;
         if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
             lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lrem(
-                    1, element.toString());
+                    1, element.toString()).intValue();
         } else if (johmElementType == JOhmCollectionDataType.MODEL) {
             lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lrem(
-                    1, JOhmUtils.getId(element).toString());
+                    1, JOhmUtils.getId(element).toString()).intValue();
         }
         if (isIndexed) {
             unindexValue(element);

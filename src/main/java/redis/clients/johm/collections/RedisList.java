@@ -172,7 +172,8 @@ public class RedisList<T> implements java.util.List<T> {
 
     @Override
     public int size() {
-        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).llen();
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).llen()
+                .intValue();
     }
 
     @Override
@@ -249,10 +250,11 @@ public class RedisList<T> implements java.util.List<T> {
             Integer lrem = 0;
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
                 lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                        .lrem(1, element.toString());
+                        .lrem(1, element.toString()).intValue();
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                        .lrem(1, JOhmUtils.getId(element).toString());
+                        .lrem(1, JOhmUtils.getId(element).toString())
+                        .intValue();
             }
             unindexValue(element);
             success = lrem > 0;

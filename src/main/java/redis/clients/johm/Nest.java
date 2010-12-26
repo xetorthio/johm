@@ -3,7 +3,6 @@ package redis.clients.johm;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -92,9 +91,9 @@ public class Nest<T> {
         return string;
     }
 
-    public Integer incr() {
+    public Long incr() {
         Jedis jedis = getResource();
-        Integer incr = jedis.incr(key());
+        Long incr = jedis.incr(key());
         returnResource(jedis);
         return incr;
     }
@@ -106,16 +105,16 @@ public class Nest<T> {
         return multi;
     }
 
-    public Integer del() {
+    public Long del() {
         Jedis jedis = getResource();
-        Integer del = jedis.del(key());
+        Long del = jedis.del(key());
         returnResource(jedis);
         return del;
     }
 
-    public Integer exists() {
+    public Boolean exists() {
         Jedis jedis = getResource();
-        Integer exists = jedis.exists(key());
+        Boolean exists = jedis.exists(key());
         returnResource(jedis);
         return exists;
     }
@@ -142,16 +141,16 @@ public class Nest<T> {
         return value;
     }
 
-    public Integer hdel(String field) {
+    public Long hdel(String field) {
         Jedis jedis = getResource();
-        Integer hdel = jedis.hdel(key(), field);
+        Long hdel = jedis.hdel(key(), field);
         returnResource(jedis);
         return hdel;
     }
 
-    public Integer hlen() {
+    public Long hlen() {
         Jedis jedis = getResource();
-        Integer hlen = jedis.hlen(key());
+        Long hlen = jedis.hlen(key());
         returnResource(jedis);
         return hlen;
     }
@@ -164,16 +163,16 @@ public class Nest<T> {
     }
 
     // Redis Set Operations
-    public Integer sadd(String member) {
+    public Long sadd(String member) {
         Jedis jedis = getResource();
-        Integer reply = jedis.sadd(key(), member);
+        Long reply = jedis.sadd(key(), member);
         returnResource(jedis);
         return reply;
     }
 
-    public Integer srem(String member) {
+    public Long srem(String member) {
         Jedis jedis = getResource();
-        Integer reply = jedis.srem(key(), member);
+        Long reply = jedis.srem(key(), member);
         returnResource(jedis);
         return reply;
     }
@@ -186,9 +185,9 @@ public class Nest<T> {
     }
 
     // Redis List Operations
-    public Integer rpush(String string) {
+    public Long rpush(String string) {
         Jedis jedis = getResource();
-        Integer rpush = jedis.rpush(key(), string);
+        Long rpush = jedis.rpush(key(), string);
         returnResource(jedis);
         return rpush;
     }
@@ -207,16 +206,16 @@ public class Nest<T> {
         return lindex;
     }
 
-    public Integer llen() {
+    public Long llen() {
         Jedis jedis = getResource();
-        Integer llen = jedis.llen(key());
+        Long llen = jedis.llen(key());
         returnResource(jedis);
         return llen;
     }
 
-    public Integer lrem(int count, String value) {
+    public Long lrem(int count, String value) {
         Jedis jedis = getResource();
-        Integer lrem = jedis.lrem(key(), count, value);
+        Long lrem = jedis.lrem(key(), count, value);
         returnResource(jedis);
         return lrem;
     }
@@ -236,16 +235,16 @@ public class Nest<T> {
         return zrange;
     }
 
-    public Integer zadd(float score, String member) {
+    public Long zadd(float score, String member) {
         Jedis jedis = getResource();
-        Integer zadd = jedis.zadd(key(), score, member);
+        Long zadd = jedis.zadd(key(), score, member);
         returnResource(jedis);
         return zadd;
     }
 
-    public Integer zcard() {
+    public Long zcard() {
         Jedis jedis = getResource();
-        Integer zadd = jedis.zcard(key());
+        Long zadd = jedis.zcard(key());
         returnResource(jedis);
         return zadd;
     }
@@ -256,11 +255,7 @@ public class Nest<T> {
 
     private Jedis getResource() {
         Jedis jedis;
-        try {
-            jedis = jedisPool.getResource();
-        } catch (TimeoutException e) {
-            throw new JOhmException(e);
-        }
+        jedis = jedisPool.getResource();
         return jedis;
     }
 

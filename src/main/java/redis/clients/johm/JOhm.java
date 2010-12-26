@@ -52,7 +52,7 @@ public final class JOhm {
 
         Nest nest = new Nest(clazz);
         nest.setJedisPool(jedisPool);
-        if (nest.cat(id).exists().intValue() == 0) {
+        if (!nest.cat(id).exists()) {
             return null;
         }
 
@@ -372,7 +372,7 @@ public final class JOhm {
         nest.setJedisPool(jedisPool);
         if (id == null) {
             // lazily initialize id, nest, collections
-            id = nest.cat("id").incr();
+            id = nest.cat("id").incr().intValue();
             JOhmUtils.loadId(model, id);
             JOhmUtils.initCollections(model, nest);
         }

@@ -169,7 +169,7 @@ public class RedisSortedSet<T> implements Set<T> {
     @Override
     public int size() {
         int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .zcard();
+                .zcard().intValue();
         return repoSize;
     }
 
