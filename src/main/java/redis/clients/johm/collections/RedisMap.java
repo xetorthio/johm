@@ -169,9 +169,8 @@ public class RedisMap<K, V> implements Map<K, V> {
 
     @Override
     public int size() {
-        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .hlen().intValue();
-        return repoSize;
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).hlen()
+                .intValue();
     }
 
     @Override

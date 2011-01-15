@@ -247,17 +247,16 @@ public class RedisList<T> implements java.util.List<T> {
     private boolean internalRemove(T element) {
         boolean success = false;
         if (element != null) {
-            Integer lrem = 0;
+            Long lrem = 0L;
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
                 lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                        .lrem(1, element.toString()).intValue();
+                        .lrem(1, element.toString());
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                        .lrem(1, JOhmUtils.getId(element).toString())
-                        .intValue();
+                        .lrem(1, JOhmUtils.getId(element).toString());
             }
             unindexValue(element);
-            success = lrem > 0;
+            success = lrem > 0L;
         }
         return success;
     }

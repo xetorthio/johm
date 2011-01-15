@@ -7,11 +7,11 @@ import redis.clients.johm.Model;
 @Model
 public class Country {
     @Id
-    private Integer id;
+    private Long id;
     @Attribute
     private String name;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
