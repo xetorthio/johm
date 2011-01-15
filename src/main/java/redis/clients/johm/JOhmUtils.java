@@ -21,12 +21,12 @@ public final class JOhmUtils {
         return field.getName() + "_id";
     }
 
-    public static Integer getId(final Object model) {
+    public static Long getId(final Object model) {
         return getId(model, true);
     }
 
-    public static Integer getId(final Object model, boolean checkValidity) {
-        Integer id = null;
+    public static Long getId(final Object model, boolean checkValidity) {
+        Long id = null;
         if (model != null) {
             if (checkValidity) {
                 Validator.checkValidModel(model);
@@ -103,7 +103,7 @@ public final class JOhmUtils {
         }
     }
 
-    static void loadId(final Object model, final Integer id) {
+    static void loadId(final Object model, final Long id) {
         if (model != null) {
             boolean idFieldPresent = false;
             for (Field field : model.getClass().getDeclaredFields()) {
@@ -293,15 +293,15 @@ public final class JOhmUtils {
             }
         }
 
-        static Integer checkValidId(final Object model) {
-            Integer id = null;
+        static Long checkValidId(final Object model) {
+            Long id = null;
             boolean idFieldPresent = false;
             for (Field field : model.getClass().getDeclaredFields()) {
                 field.setAccessible(true);
                 if (field.isAnnotationPresent(Id.class)) {
                     Validator.checkValidIdType(field);
                     try {
-                        id = (Integer) field.get(model);
+                        id = (Long) field.get(model);
                         idFieldPresent = true;
                     } catch (IllegalArgumentException e) {
                         throw new JOhmException(e);
@@ -324,9 +324,9 @@ public final class JOhmUtils {
                         "Element annotated @Id cannot have any other annotations");
             }
             Class<?> type = field.getType().getClass();
-            if (!type.isInstance(Integer.class) || !type.isInstance(int.class)) {
+            if (!type.isInstance(Long.class) || !type.isInstance(long.class)) {
                 throw new JOhmException(field.getType().getSimpleName()
-                        + " is annotated an Id but is not an integer");
+                        + " is annotated an Id but is not a long");
             }
         }
 

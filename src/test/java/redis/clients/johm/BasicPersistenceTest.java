@@ -8,7 +8,7 @@ import redis.clients.johm.models.Country;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
-public class BasicPersistanceTest extends JOhmTestBase {
+public class BasicPersistenceTest extends JOhmTestBase {
     @Test
     public void save() {
         User user = new User();
@@ -133,7 +133,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
     public void delete() {
         User user = new User();
         JOhm.save(user);
-        int id = user.getId();
+        Long id = user.getId();
 
         assertNotNull(JOhm.get(User.class, id));
         assertTrue(JOhm.delete(User.class, id));

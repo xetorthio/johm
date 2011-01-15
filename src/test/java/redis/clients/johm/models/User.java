@@ -18,7 +18,7 @@ import redis.clients.johm.Reference;
 @Model
 public class User {
     @Id
-    private Integer id;
+    private Long id;
     @Attribute
     @Indexed
     private String name;
@@ -49,7 +49,7 @@ public class User {
     @Indexed
     private Item[] threeLatestPurchases;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 

@@ -7,7 +7,7 @@ import redis.clients.johm.Model;
 @Model
 public class Book extends Item {
     @Id
-    private Integer id;
+    private Long id;
     @Attribute
     private String asin;
     @Attribute
@@ -15,7 +15,7 @@ public class Book extends Item {
     @Attribute
     private short yearOfPublication;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 

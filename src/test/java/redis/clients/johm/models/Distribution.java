@@ -16,7 +16,7 @@ import redis.clients.johm.Model;
 @Model
 public class Distribution {
     @Id
-    private Integer id;
+    private Long id;
     @Attribute
     private String distroScope;
     @CollectionMap(key = Integer.class, value = String.class)
@@ -47,7 +47,7 @@ public class Distribution {
     @Indexed
     private Item[] buildTools;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 

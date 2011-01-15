@@ -157,9 +157,8 @@ public class RedisSortedSet<T> implements Set<T> {
     }
 
     public int size() {
-        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .zcard().intValue();
-        return repoSize;
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).zcard()
+                .intValue();
     }
 
     public Object[] toArray() {
