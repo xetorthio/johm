@@ -1,11 +1,16 @@
 # JOhm
 
-JOhm is a Object-hash mapping library for Java inspired on the awesome [Ohm](http://github.com/soveran/ohm).
+JOhm is a blazingly fast Object-Hash Mapping library for Java inspired by the awesome [Ohm](http://github.com/soveran/ohm). The JOhm OHM is a 
+modern-day avatar of the old ORM's like Hibernate with the difference being that we are not dealing with an RDBMS here but with a NoSQL rockstar.
 
-JOhm is a library for storing objects in [Redis](http://github.com/antirez/redis), a persistent key-value database.
+JOhm is a library for storing objects in [Redis](http://github.com/antirez/redis), a persistent key-value database. JOhm is designed to be 
+minimally-invasive and relies wholly on reflection aided by annotation hooks for persistence. The fundamental idea is to allow large existing
+codebases to easily plug into Redis without the need to extend framework base classes or provide excessive configuration metadata.
+
+Durable data storage is available via the Redis Append-only file (AOF). The default persistence strategy is Snapshotting.
 
 ## What can I do with JOhm?
-Right now it is still in development. So just the following features are available.
+JOhm is still in active development. The following features are currently available:
 
 - Basic attribute persistence (String, Integer, etc...)
 - Auto-numeric Ids
@@ -27,7 +32,7 @@ And this is a small example (getters and setters are not included for the sake o
     @Model
     class User {
         @Id
-        private Integer id;
+        private Long id;
     	@Attribute
     	private String name;
     	@Attribute
@@ -56,7 +61,7 @@ And this is a small example (getters and setters are not included for the sake o
     @Model
 	class Comment {
 	    @Id
-	    private Integer id;
+	    private Long id;
     	@Attribute
     	private String text;
 	}
@@ -64,14 +69,13 @@ And this is a small example (getters and setters are not included for the sake o
     @Model
 	class Item {
 	    @Id
-	    private Integer id;
+	    private Long id;
     	@Attribute
     	private String name;
 	}
 
 Initiating JOhm:
-    jedisPool = new JedisPool("localhost");
-    jedisPool.init();
+    jedisPool = new JedisPool(new Config(), "localhost");
     JOhm.setPool(jedisPool);
 
 Creating a User and persisting it:
