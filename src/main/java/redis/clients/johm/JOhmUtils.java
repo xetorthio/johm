@@ -1,5 +1,6 @@
 package redis.clients.johm;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -319,9 +320,18 @@ public final class JOhmUtils {
         }
 
         static void checkValidIdType(final Field field) {
-            if (field.getAnnotations().length > 1) {
-                throw new JOhmException(
-                        "Element annotated @Id cannot have any other annotations");
+            Annotation[] annotations = field.getAnnotations();
+            if (annotations.length > 1) {
+                for (Annotation annotation : annotations) {
+                    Class<?> annotationType = annotation.annotationType();
+                    if (annotationType.equals(Id.class)) {
+                        continue;
+                    }
+                    if (JOHM_SUPPORTED_ANNOTATIONS.contains(annotationType)) {
+                        throw new JOhmException(
+                                "Element annotated @Id cannot have any other JOhm annotations");
+                    }
+                }
             }
             Class<?> type = field.getType().getClass();
             if (!type.isInstance(Long.class) || !type.isInstance(long.class)) {
@@ -448,6 +458,7 @@ public final class JOhmUtils {
     }
 
     private static final Set<Class<?>> JOHM_SUPPORTED_PRIMITIVES = new HashSet<Class<?>>();
+    private static final Set<Class<?>> JOHM_SUPPORTED_ANNOTATIONS = new HashSet<Class<?>>();
     static {
         JOHM_SUPPORTED_PRIMITIVES.add(String.class);
         JOHM_SUPPORTED_PRIMITIVES.add(Byte.class);
@@ -468,5 +479,16 @@ public final class JOhmUtils {
         JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
+
+        JOHM_SUPPORTED_ANNOTATIONS.add(Array.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(Attribute.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(CollectionList.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(CollectionMap.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(CollectionSet.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(CollectionSortedSet.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(Id.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(Indexed.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(Model.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(Reference.class);
     }
 }

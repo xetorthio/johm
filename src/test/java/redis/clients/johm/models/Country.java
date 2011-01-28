@@ -7,6 +7,7 @@ import redis.clients.johm.Model;
 @Model
 public class Country {
     @Id
+    @TestAnnotation
     private Long id;
     @Attribute
     private String name;
