@@ -5,6 +5,7 @@ import java.util.Set;
 import org.junit.Test;
 
 import redis.clients.johm.models.Country;
+import redis.clients.johm.models.FaultyModel;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
@@ -172,6 +173,13 @@ public class BasicPersistenceTest extends JOhmTestBase {
     public void shouldNotPersistWithoutModel() {
         Nest<String> dummyNest = new Nest<String>();
         JOhm.save(dummyNest);
+    }
+
+    @Test(expected = JOhmException.class)
+    public void shouldNotPersistModelWithOtherJOhmIdAnnotations() {
+        FaultyModel badModel = new FaultyModel();
+        badModel.setType("horribleId");
+        JOhm.save(badModel);
     }
 
     @Test
