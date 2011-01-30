@@ -69,7 +69,6 @@ public class RedisMap<K, V> implements Map<K, V> {
         }
     }
 
-    @Override
     public void clear() {
         Map<String, String> savedHash = nest.cat(JOhmUtils.getId(owner)).cat(
                 field.getName()).hgetAll();
@@ -80,23 +79,19 @@ public class RedisMap<K, V> implements Map<K, V> {
         nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
-    @Override
     public boolean containsKey(Object key) {
         return scrollElements().containsKey(key);
     }
 
-    @Override
     public boolean containsValue(Object value) {
         return scrollElements().containsValue(value);
     }
 
-    @Override
     public Set<java.util.Map.Entry<K, V>> entrySet() {
         return scrollElements().entrySet();
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public V get(Object key) {
         V value = null;
         String valueKey = null;
@@ -118,13 +113,11 @@ public class RedisMap<K, V> implements Map<K, V> {
         return value;
     }
 
-    @Override
     public boolean isEmpty() {
         return this.size() == 0;
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public Set<K> keySet() {
         Set<K> keys = new LinkedHashSet<K>();
         for (String key : nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
@@ -138,14 +131,12 @@ public class RedisMap<K, V> implements Map<K, V> {
         return keys;
     }
 
-    @Override
     public V put(K key, V value) {
         V previousValue = get(key);
         internalPut(key, value);
         return previousValue;
     }
 
-    @Override
     public void putAll(Map<? extends K, ? extends V> mapToCopyIn) {
         for (Map.Entry<? extends K, ? extends V> entry : mapToCopyIn.entrySet()) {
             internalPut(entry.getKey(), entry.getValue());
@@ -153,7 +144,6 @@ public class RedisMap<K, V> implements Map<K, V> {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public V remove(Object key) {
         V value = get(key);
         if (johmKeyType == JOhmCollectionDataType.PRIMITIVE) {
@@ -167,14 +157,12 @@ public class RedisMap<K, V> implements Map<K, V> {
         return value;
     }
 
-    @Override
     public int size() {
         int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .hlen().intValue();
         return repoSize;
     }
 
-    @Override
     public Collection<V> values() {
         return scrollElements().values();
     }
