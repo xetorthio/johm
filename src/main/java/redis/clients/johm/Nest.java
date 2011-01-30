@@ -262,7 +262,8 @@ public class Nest<T> {
     private void checkRedisLiveness() {
         if (jedisPool == null) {
             throw new JOhmException(
-                    "JOhm will fail to do most useful tasks without Redis");
+                    "JOhm will fail to do most useful tasks without Redis",
+                    JOhmExceptionMeta.NULL_JEDIS_POOL);
         }
     }
 }

@@ -70,9 +70,11 @@ public final class JOhm {
 
             return (T) newInstance;
         } catch (InstantiationException e) {
-            throw new JOhmException(e);
+            throw new JOhmException(e,
+                    JOhmExceptionMeta.INSTANTIATION_EXCEPTION);
         } catch (IllegalAccessException e) {
-            throw new JOhmException(e);
+            throw new JOhmException(e,
+                    JOhmExceptionMeta.ILLEGAL_ACCESS_EXCEPTION);
         }
     }
 
@@ -220,9 +222,11 @@ public final class JOhm {
                 nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
             }
         } catch (IllegalArgumentException e) {
-            throw new JOhmException(e);
+            throw new JOhmException(e,
+                    JOhmExceptionMeta.ILLEGAL_ARGUMENT_EXCEPTION);
         } catch (IllegalAccessException e) {
-            throw new JOhmException(e);
+            throw new JOhmException(e,
+                    JOhmExceptionMeta.ILLEGAL_ACCESS_EXCEPTION);
         }
 
         nest.multi(new TransactionBlock() {
@@ -274,9 +278,12 @@ public final class JOhm {
                         try {
                             fieldValue = field.get(persistedModel);
                         } catch (IllegalArgumentException e) {
-                            throw new JOhmException(e);
+                            throw new JOhmException(
+                                    e,
+                                    JOhmExceptionMeta.ILLEGAL_ARGUMENT_EXCEPTION);
                         } catch (IllegalAccessException e) {
-                            throw new JOhmException(e);
+                            throw new JOhmException(e,
+                                    JOhmExceptionMeta.ILLEGAL_ACCESS_EXCEPTION);
                         }
                         if (fieldValue != null
                                 && field.isAnnotationPresent(Reference.class)) {
@@ -301,9 +308,12 @@ public final class JOhm {
                                         deleteChildren); // children
                             }
                         } catch (IllegalArgumentException e) {
-                            throw new JOhmException(e);
+                            throw new JOhmException(
+                                    e,
+                                    JOhmExceptionMeta.ILLEGAL_ARGUMENT_EXCEPTION);
                         } catch (IllegalAccessException e) {
-                            throw new JOhmException(e);
+                            throw new JOhmException(e,
+                                    JOhmExceptionMeta.ILLEGAL_ACCESS_EXCEPTION);
                         }
                     }
                     if (field.isAnnotationPresent(Array.class)) {
