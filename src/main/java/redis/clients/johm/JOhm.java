@@ -132,6 +132,86 @@ public final class JOhm {
         }
         return (List<T>) results;
     }
+    public static class AttributePair {
+        private String attributeName;
+        private Object attributeValue;
+        
+        public AttributePair(String attributeName, Object attributeValue) {
+            this.attributeName=attributeName;
+            this.attributeValue=attributeValue;
+        }
+        public String getAttributeName() {
+            return(attributeName);
+        }
+        public Object getAttributeValue() {
+            return(attributeValue);
+        }
+    }
+    /**
+     * Search a Model in redis index using its attribute's given name/value
+     * pair. This can potentially return more than 1 matches if some indexed
+     * Model's have identical attributeValue for given attributeName.
+     * 
+     * @param clazz
+     *            Class of Model annotated-type to search
+     * @param attributes
+     *            The attributes you are searching
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+        public static <T> List<T> find(Class<?> clazz, AttributePair... attributes) {
+        JOhmUtils.Validator.checkValidModelClazz(clazz);
+        List<Object> results = null;
+
+        Nest nest = new Nest(clazz);
+        nest.setJedisPool(jedisPool);
+        
+        for(AttributePair pair : attributes) {
+            String attributeName;
+            if (!JOhmUtils.Validator.isIndexable(pair.getAttributeName())) {
+                throw new InvalidFieldException();
+            }
+            
+            try {
+                Field field = clazz.getDeclaredField(pair.getAttributeName());
+                field.setAccessible(true);
+                if (!field.isAnnotationPresent(Indexed.class)) {
+                    throw new InvalidFieldException();
+                }
+                if (field.isAnnotationPresent(Reference.class)) {
+                    attributeName = JOhmUtils.getReferenceKeyName(field);
+                }
+                else {
+                    attributeName=pair.getAttributeName();
+                }
+            } catch (SecurityException e) {
+                throw new InvalidFieldException();
+            } catch (NoSuchFieldException e) {
+                throw new InvalidFieldException();
+            }
+            if (JOhmUtils.isNullOrEmpty(pair.getAttributeValue())) {
+                throw new InvalidFieldException();
+            }
+            nest.cat(attributeName)
+                .cat(pair.getAttributeValue()).next();
+        }
+        Set<String> modelIdStrings = nest.sinter();
+
+
+        if (modelIdStrings != null) {
+            // TODO: Do this lazy
+            results = new ArrayList<Object>();
+            Object indexed = null;
+            for (String modelIdString : modelIdStrings) {
+                indexed = get(clazz, Integer.parseInt(modelIdString));
+                if (indexed != null) {
+                    results.add(indexed);
+                }
+            }
+        }
+        return (List<T>) results;
+    }
+    
 
     /**
      * Save given model to Redis. By default, this does not save all its child
