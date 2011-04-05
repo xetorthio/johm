@@ -39,17 +39,14 @@ public class RedisList<T> implements java.util.List<T> {
         this.owner = owner;
     }
 
-    @Override
     public boolean add(T e) {
         return internalAdd(e);
     }
 
-    @Override
     public void add(int index, T element) {
         internalIndexedAdd(index, element);
     }
 
-    @Override
     public boolean addAll(Collection<? extends T> c) {
         boolean success = true;
         for (T element : c) {
@@ -58,7 +55,6 @@ public class RedisList<T> implements java.util.List<T> {
         return success;
     }
 
-    @Override
     public boolean addAll(int index, Collection<? extends T> c) {
         for (T element : c) {
             internalIndexedAdd(index++, element);
@@ -66,23 +62,19 @@ public class RedisList<T> implements java.util.List<T> {
         return true;
     }
 
-    @Override
     public void clear() {
         nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
-    @Override
     public boolean contains(Object o) {
         return scrollElements().contains(o);
     }
 
-    @Override
     public boolean containsAll(Collection<?> c) {
         return scrollElements().containsAll(c);
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public T get(int index) {
         T element = null;
         String key = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
@@ -97,49 +89,40 @@ public class RedisList<T> implements java.util.List<T> {
         return element;
     }
 
-    @Override
     public int indexOf(Object o) {
         return scrollElements().indexOf(o);
     }
 
-    @Override
     public boolean isEmpty() {
         return this.size() == 0;
     }
 
-    @Override
     public Iterator<T> iterator() {
         return scrollElements().iterator();
     }
 
-    @Override
     public int lastIndexOf(Object o) {
         return scrollElements().lastIndexOf(o);
     }
 
-    @Override
     public ListIterator<T> listIterator() {
         return scrollElements().listIterator();
     }
 
-    @Override
     public ListIterator<T> listIterator(int index) {
         return scrollElements().listIterator(index);
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public boolean remove(Object o) {
         return internalRemove((T) o);
     }
 
-    @Override
     public T remove(int index) {
         return internalIndexedRemove(index);
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public boolean removeAll(Collection<?> c) {
         boolean success = true;
         Iterator<?> iterator = (Iterator<?>) c.iterator();
@@ -151,7 +134,6 @@ public class RedisList<T> implements java.util.List<T> {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public boolean retainAll(Collection<?> c) {
         this.clear();
         Iterator<?> iterator = (Iterator<?>) c.iterator();
@@ -163,31 +145,26 @@ public class RedisList<T> implements java.util.List<T> {
         return success;
     }
 
-    @Override
     public T set(int index, T element) {
         T previousElement = this.get(index);
         internalIndexedAdd(index, element);
         return previousElement;
     }
 
-    @Override
     public int size() {
         return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).llen()
                 .intValue();
     }
 
-    @Override
     public java.util.List<T> subList(int fromIndex, int toIndex) {
         return scrollElements().subList(fromIndex, toIndex);
     }
 
-    @Override
     public Object[] toArray() {
         return scrollElements().toArray();
     }
 
     @SuppressWarnings("hiding")
-    @Override
     public <T> T[] toArray(T[] a) {
         return scrollElements().toArray(a);
     }
@@ -247,17 +224,16 @@ public class RedisList<T> implements java.util.List<T> {
     private boolean internalRemove(T element) {
         boolean success = false;
         if (element != null) {
-            Integer lrem = 0;
+            Long lrem = 0L;
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
                 lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                        .lrem(1, element.toString()).intValue();
+                        .lrem(1, element.toString());
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                        .lrem(1, JOhmUtils.getId(element).toString())
-                        .intValue();
+                        .lrem(1, JOhmUtils.getId(element).toString());
             }
             unindexValue(element);
-            success = lrem > 0;
+            success = lrem > 0L;
         }
         return success;
     }

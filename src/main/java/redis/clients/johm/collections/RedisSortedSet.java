@@ -95,12 +95,10 @@ public class RedisSortedSet<T> implements Set<T> {
         return success;
     }
 
-    @Override
     public boolean add(T e) {
         return internalAdd(e);
     }
 
-    @Override
     public boolean addAll(Collection<? extends T> collection) {
         boolean success = true;
         for (T element : collection) {
@@ -109,39 +107,32 @@ public class RedisSortedSet<T> implements Set<T> {
         return success;
     }
 
-    @Override
     public void clear() {
         nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
-    @Override
     public boolean contains(Object o) {
         return scrollElements().contains(o);
     }
 
-    @Override
     public boolean containsAll(Collection<?> c) {
         return scrollElements().containsAll(c);
     }
 
-    @Override
     public boolean isEmpty() {
         return this.size() == 0;
     }
 
-    @Override
     public Iterator<T> iterator() {
         return scrollElements().iterator();
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public boolean remove(Object o) {
         return internalRemove((T) o);
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public boolean removeAll(Collection<?> c) {
         Iterator<?> iterator = (Iterator<?>) c.iterator();
         boolean success = true;
@@ -153,7 +144,6 @@ public class RedisSortedSet<T> implements Set<T> {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public boolean retainAll(Collection<?> c) {
         this.clear();
         Iterator<?> iterator = (Iterator<?>) c.iterator();
@@ -166,19 +156,15 @@ public class RedisSortedSet<T> implements Set<T> {
 
     }
 
-    @Override
     public int size() {
-        int repoSize = nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
-                .zcard().intValue();
-        return repoSize;
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).zcard()
+                .intValue();
     }
 
-    @Override
     public Object[] toArray() {
         return scrollElements().toArray();
     }
 
-    @Override
     @SuppressWarnings("hiding")
     public <T> T[] toArray(T[] a) {
         return scrollElements().toArray(a);

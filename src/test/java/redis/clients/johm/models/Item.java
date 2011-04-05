@@ -7,13 +7,13 @@ import redis.clients.johm.Model;
 @Model
 public class Item {
     @Id
-    private Integer id;
+    private Long id;
     @Attribute
     private String name;
     @Attribute
     private Float price;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 

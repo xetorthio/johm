@@ -5,10 +5,11 @@ import java.util.Set;
 import org.junit.Test;
 
 import redis.clients.johm.models.Country;
+import redis.clients.johm.models.FaultyModel;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
-public class BasicPersistanceTest extends JOhmTestBase {
+public class BasicPersistenceTest extends JOhmTestBase {
     @Test
     public void save() {
         User user = new User();
@@ -133,7 +134,7 @@ public class BasicPersistanceTest extends JOhmTestBase {
     public void delete() {
         User user = new User();
         JOhm.save(user);
-        int id = user.getId();
+        Long id = user.getId();
 
         assertNotNull(JOhm.get(User.class, id));
         assertTrue(JOhm.delete(User.class, id));
@@ -172,6 +173,13 @@ public class BasicPersistanceTest extends JOhmTestBase {
     public void shouldNotPersistWithoutModel() {
         Nest<String> dummyNest = new Nest<String>();
         JOhm.save(dummyNest);
+    }
+
+    @Test(expected = JOhmException.class)
+    public void shouldNotPersistModelWithOtherJOhmIdAnnotations() {
+        FaultyModel badModel = new FaultyModel();
+        badModel.setType("horribleId");
+        JOhm.save(badModel);
     }
 
     @Test

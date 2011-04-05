@@ -64,8 +64,8 @@ public class RedisArray<T> {
         }
     }
 
-    public int clear() {
-        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del().intValue();
+    public Long clear() {
+        return nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).del();
     }
 
     private boolean save(T element) {
@@ -129,17 +129,17 @@ public class RedisArray<T> {
         if (element == null) {
             return false;
         }
-        Integer lrem = 0;
+        Long lrem = 0L;
         if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
             lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lrem(
-                    1, element.toString()).intValue();
+                    1, element.toString());
         } else if (johmElementType == JOhmCollectionDataType.MODEL) {
             lrem = nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lrem(
-                    1, JOhmUtils.getId(element).toString()).intValue();
+                    1, JOhmUtils.getId(element).toString());
         }
         if (isIndexed) {
             unindexValue(element);
         }
-        return lrem > 0;
+        return lrem > 0L;
     }
 }

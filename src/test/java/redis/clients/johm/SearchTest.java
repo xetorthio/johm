@@ -51,7 +51,7 @@ public class SearchTest extends JOhmTestBase {
         user1.setSalary(9999.99f);
         user1.setInitial('m');
         JOhm.save(user1);
-        int id1 = user1.getId();
+        Long id1 = user1.getId();
 
         User user2 = new User();
         user2.setName("zmodel2");
@@ -59,7 +59,7 @@ public class SearchTest extends JOhmTestBase {
         user2.setAge(8);
         user2.setInitial('z');
         user2 = JOhm.save(user2);
-        int id2 = user2.getId();
+        Long id2 = user2.getId();
 
         assertNotNull(JOhm.get(User.class, id1));
         assertNotNull(JOhm.get(User.class, id2));
@@ -267,7 +267,7 @@ public class SearchTest extends JOhmTestBase {
         user.setAge(66); // younger still
         JOhm.save(user);
 
-        int id = user.getId();
+        Long id = user.getId();
 
         assertNotNull(JOhm.get(User.class, id));
 

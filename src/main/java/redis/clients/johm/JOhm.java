@@ -27,7 +27,7 @@ public final class JOhm {
      * only after an initial interaction with Redis in the form of a call to
      * save().
      */
-    public static Integer getId(final Object model) {
+    public static Long getId(final Object model) {
         return JOhmUtils.getId(model);
     }
 
@@ -47,7 +47,7 @@ public final class JOhm {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <T> T get(Class<?> clazz, int id) {
+    public static <T> T get(Class<?> clazz, long id) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
 
         Nest nest = new Nest(clazz);
@@ -124,7 +124,7 @@ public final class JOhm {
             results = new ArrayList<Object>();
             Object indexed = null;
             for (String modelIdString : modelIdStrings) {
-                indexed = get(clazz, Integer.parseInt(modelIdString));
+                indexed = get(clazz, Long.parseLong(modelIdString));
                 if (indexed != null) {
                     results.add(indexed);
                 }
@@ -330,13 +330,13 @@ public final class JOhm {
      * @param id
      * @return
      */
-    public static boolean delete(Class<?> clazz, int id) {
+    public static boolean delete(Class<?> clazz, long id) {
         return delete(clazz, id, true, false);
     }
 
     @SuppressWarnings("unchecked")
-    public static boolean delete(Class<?> clazz, int id, boolean deleteIndexes,
-            boolean deleteChildren) {
+    public static boolean delete(Class<?> clazz, long id,
+            boolean deleteIndexes, boolean deleteChildren) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
         boolean deleted = false;
         Object persistedModel = get(clazz, id);
@@ -426,7 +426,7 @@ public final class JOhm {
             String serializedReferenceId = hashedObject.get(JOhmUtils
                     .getReferenceKeyName(field));
             if (serializedReferenceId != null) {
-                Integer referenceId = Integer.valueOf(serializedReferenceId);
+                Long referenceId = Long.valueOf(serializedReferenceId);
                 field.set(newInstance, get(field.getType(), referenceId));
             }
         }
@@ -447,12 +447,12 @@ public final class JOhm {
 
     @SuppressWarnings("unchecked")
     private static Nest initIfNeeded(final Object model) {
-        Integer id = JOhmUtils.getId(model);
+        Long id = JOhmUtils.getId(model);
         Nest nest = new Nest(model);
         nest.setJedisPool(jedisPool);
         if (id == null) {
             // lazily initialize id, nest, collections
-            id = nest.cat("id").incr().intValue();
+            id = nest.cat("id").incr();
             JOhmUtils.loadId(model, id);
             JOhmUtils.initCollections(model, nest);
         }
@@ -470,7 +470,7 @@ public final class JOhm {
             results = new HashSet<Object>();
             Object indexed = null;
             for (String modelIdString : modelIdStrings) {
-                indexed = get(clazz, Integer.parseInt(modelIdString));
+                indexed = get(clazz, Long.parseLong(modelIdString));
                 if (indexed != null) {
                     results.add(indexed);
                 }

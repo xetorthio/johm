@@ -4,8 +4,8 @@ import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class SimpleTimer {
-    private AtomicLong beginMillis = new AtomicLong(0L);
-    private AtomicLong endMillis = new AtomicLong(0L);
+    private final AtomicLong beginMillis = new AtomicLong(0L);
+    private final AtomicLong endMillis = new AtomicLong(0L);
 
     void begin() {
         reset(); // better be safe
