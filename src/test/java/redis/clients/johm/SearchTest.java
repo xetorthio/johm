@@ -318,7 +318,7 @@ public class SearchTest extends JOhmTestBase {
         user.setName("m");
         JOhm.save(user);
         
-        List<User> gotUsers=JOhm.find(User.class,new JOhm.AttributePair("age",88),new JOhm.AttributePair("name","b"));
+        List<User> gotUsers=JOhm.find(User.class,new NVField("age",88),new NVField("name","b"));
         assertEquals(1,gotUsers.size());
         assertEquals(88,gotUsers.get(0).getAge());
         assertEquals("b",gotUsers.get(0).getName());

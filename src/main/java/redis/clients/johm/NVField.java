@@ -4,11 +4,11 @@ package redis.clients.johm;
  * NVPair provides a helper-class for providing the attribute name and values.
  * It allows queries for attributes
  */
-public class NVPair {
+public class NVField {
         private String attributeName;
         private Object attributeValue;
         
-        public NVPair(String attributeName, Object attributeValue) {
+        public NVField(String attributeName, Object attributeValue) {
             this.attributeName=attributeName;
             this.attributeValue=attributeValue;
         }

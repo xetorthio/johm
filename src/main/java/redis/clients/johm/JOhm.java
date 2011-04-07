@@ -132,21 +132,7 @@ public final class JOhm {
         }
         return (List<T>) results;
     }
-    public static class AttributePair {
-        private String attributeName;
-        private Object attributeValue;
-        
-        public AttributePair(String attributeName, Object attributeValue) {
-            this.attributeName=attributeName;
-            this.attributeValue=attributeValue;
-        }
-        public String getAttributeName() {
-            return(attributeName);
-        }
-        public Object getAttributeValue() {
-            return(attributeValue);
-        }
-    }
+    
     /**
      * Search a Model in redis index using its attribute's given name/value
      * pair. This can potentially return more than 1 matches if some indexed
@@ -159,14 +145,14 @@ public final class JOhm {
      * @return
      */
     @SuppressWarnings("unchecked")
-        public static <T> List<T> find(Class<?> clazz, AttributePair... attributes) {
+        public static <T> List<T> find(Class<?> clazz, NVField... attributes) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
         List<Object> results = null;
 
         Nest nest = new Nest(clazz);
         nest.setJedisPool(jedisPool);
         
-        for(AttributePair pair : attributes) {
+        for(NVField pair : attributes) {
             String attributeName;
             if (!JOhmUtils.Validator.isIndexable(pair.getAttributeName())) {
                 throw new InvalidFieldException();
