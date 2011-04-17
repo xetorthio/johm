@@ -232,6 +232,21 @@ public class BasicPersistenceTest extends JOhmTestBase {
 
         JOhm.getAll(Book.class);
     }
+    
+    @Test
+    public void TestExpiration() throws InterruptedException {
+        Book book = new Book();
+        book.setName("expritation title");
+        JOhm.save(book);
+        JOhm.expire(book, 1);
+        Book savedBook = JOhm.get(Book.class, book.getId());
+        assertEquals(book.getName(), savedBook.getName());
+
+        // wait of expire
+        Thread.sleep(1500L);
+        savedBook = JOhm.get(Book.class, book.getId());
+        assertNull(savedBook);
+    }
 
     @Test
     public void testSelectDb() {
