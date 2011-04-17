@@ -421,8 +421,9 @@ public final class JOhm {
 	 *
 	 * @param jedisPool
 	 */
-	public static void setPool(final JedisPool jedisPool) {
+    public static JedisPool setPool(final JedisPool jedisPool) {
 		JOhm.jedisPool = jedisPool;
+		return jedisPool;
 	}
 
 	private static void fillField(final Map<String, String> hashedObject,
