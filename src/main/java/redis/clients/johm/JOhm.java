@@ -216,8 +216,6 @@ public final class JOhm {
                                 String.valueOf(JOhmUtils.getId(model)));
                     }
                 }
-                // always add to the all set, to support getAll
-                nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
             }
         } catch (IllegalArgumentException e) {
             throw new JOhmException(e);
@@ -227,6 +225,10 @@ public final class JOhm {
 
         nest.multi(new TransactionBlock() {
             public void execute() throws JedisException {
+                // to support getAll
+                if (model.getClass().isAnnotationPresent(SupportAll.class)) {
+                    nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
+                }
                 del(nest.cat(JOhmUtils.getId(model)).key());
                 hmset(nest.cat(JOhmUtils.getId(model)).key(), hashedObject);
             }
@@ -383,6 +385,7 @@ public final class JOhm {
     @SuppressWarnings("unchecked")
     public static <T> Set<T> getAll(Class<?> clazz) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
+        JOhmUtils.Validator.checkSupportAll(clazz);
         Set<Object> results = null;
         Nest nest = new Nest(clazz);
         nest.setJedisPool(jedisPool);

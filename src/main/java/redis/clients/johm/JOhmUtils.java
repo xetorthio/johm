@@ -364,6 +364,13 @@ public final class JOhmUtils {
             }
         }
 
+        static void checkSupportAll(final Class<?> modelClazz) {
+            if (!modelClazz.isAnnotationPresent(SupportAll.class)) {
+                throw new JOhmException(
+                        "This Model does'nt support getAll(). Please annotate with @SupportAll");
+            }
+        }
+
         static void checkValidCollection(final Field field) {
             boolean isList = false, isSet = false, isMap = false, isSortedSet = false;
             if (field.isAnnotationPresent(CollectionList.class)) {
