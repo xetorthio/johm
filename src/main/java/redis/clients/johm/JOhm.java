@@ -256,6 +256,18 @@ public final class JOhm {
         return delete(clazz, id, true, false);
     }
 
+    /**
+     * Set expiration period of model
+     * @param <T>
+     * @param model
+     * @param seconds
+     * @return Long
+     */
+    public static <T> Long expire(T model, int seconds) {
+        Nest<T> nest = initIfNeeded(model);
+        return nest.cat(JOhmUtils.getId(model)).expire(seconds);
+    }
+
     @SuppressWarnings("unchecked")
     public static boolean delete(Class<?> clazz, long id,
             boolean deleteIndexes, boolean deleteChildren) {

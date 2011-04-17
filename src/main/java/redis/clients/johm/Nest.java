@@ -98,6 +98,13 @@ public class Nest<T> {
         return incr;
     }
 
+    public Long expire(int seconds) {
+        Jedis jedis = getResource();
+        Long expire = jedis.expire(key(), seconds);
+        returnResource(jedis);
+        return expire;
+    }
+
     public List<Object> multi(TransactionBlock transaction) {
         Jedis jedis = getResource();
         List<Object> multi = jedis.multi(transaction);
