@@ -16,7 +16,8 @@ import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
 import redis.clients.johm.SupportAll;
 
-@Model @SupportAll
+@Model
+@SupportAll
 public class User {
     @Id
     private Long id;
