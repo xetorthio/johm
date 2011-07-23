@@ -7,7 +7,7 @@ import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Nest;
-import redis.clients.johm.JOhmUtils.Convertor;
+import redis.clients.johm.Convertor;
 import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
 
 /**
