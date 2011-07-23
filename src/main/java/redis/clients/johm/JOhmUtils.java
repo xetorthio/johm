@@ -4,13 +4,18 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.SimpleTimeZone;
 
 import redis.clients.johm.collections.RedisList;
 import redis.clients.johm.collections.RedisMap;
@@ -18,6 +23,13 @@ import redis.clients.johm.collections.RedisSet;
 import redis.clients.johm.collections.RedisSortedSet;
 
 public final class JOhmUtils {
+
+    static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
+
+    static {
+        sdf.setTimeZone(new SimpleTimeZone(0, "GMT"));
+    }
+
     static String getReferenceKeyName(final Field field) {
         return field.getName() + "_id";
     }
@@ -195,11 +207,15 @@ public final class JOhmUtils {
     }
 
     public final static class Convertor {
-        static Object convert(final Field field, final String value) {
-            return convert(field.getType(), value);
+        static Object string2object(final Field field, final String value) {
+            return string2object(field.getType(), value);
         }
 
-        public static Object convert(final Class<?> type, final String value) {
+        public static String object2string(final Field field, final Object value) {
+            return object2string(field.getType(), value);
+        }
+
+        public static Object string2object(final Class<?> type, final String value) {
             if (type.equals(Byte.class) || type.equals(byte.class)) {
                 return new Byte(value);
             }
@@ -248,6 +264,17 @@ public final class JOhmUtils {
                 return new BigInteger(value);
             }
 
+            if (type.equals(Date.class)) {
+                if (value == null) {
+                    return null;
+                }
+                try {
+                    return sdf.parse(value);
+                } catch (ParseException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
+
             if (type.isEnum() || type.equals(Enum.class)) {
                 // return Enum.valueOf(type, value);
                 return null; // TODO: handle these
@@ -265,6 +292,13 @@ public final class JOhmUtils {
 
             return value;
         }
+
+        public static String object2string(final Class<?> type, final Object value) {
+            if (Date.class.equals(type)) {
+                return sdf.format((Date)value);
+            }
+            return value.toString();
+        }
     }
 
     static final class Validator {
@@ -280,7 +314,8 @@ public final class JOhmUtils {
                     || type.equals(Boolean.class) || type.equals(boolean.class)
                     || type.equals(BigDecimal.class)
                     || type.equals(BigInteger.class)
-                    || type.equals(String.class)) {
+                    || type.equals(String.class)
+                    || type.equals(Date.class)) {
             } else {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");
@@ -486,6 +521,7 @@ public final class JOhmUtils {
         JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
 
         JOHM_SUPPORTED_ANNOTATIONS.add(Array.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(Attribute.class);

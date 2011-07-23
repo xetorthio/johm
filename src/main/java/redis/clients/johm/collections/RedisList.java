@@ -81,7 +81,7 @@ public class RedisList<T> implements java.util.List<T> {
                 .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(key)) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                element = (T) Convertor.convert(elementClazz, key);
+                element = (T) Convertor.string2object(elementClazz, key);
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 element = JOhm.<T> get(elementClazz, Integer.valueOf(key));
             }
@@ -252,7 +252,7 @@ public class RedisList<T> implements java.util.List<T> {
                 field.getName()).lrange(0, -1);
         for (String key : keys) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                elements.add((T) Convertor.convert(elementClazz, key));
+                elements.add((T) Convertor.string2object(elementClazz, key));
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
             }
