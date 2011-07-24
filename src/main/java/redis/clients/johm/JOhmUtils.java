@@ -2,12 +2,9 @@ package redis.clients.johm;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +16,8 @@ import redis.clients.johm.collections.RedisSet;
 import redis.clients.johm.collections.RedisSortedSet;
 
 public final class JOhmUtils {
+
+    public static Converter converter = new ConverterImpl();
 
     static String getReferenceKeyName(final Field field) {
         return field.getName() + "_id";
@@ -199,7 +198,7 @@ public final class JOhmUtils {
     static final class Validator {
         static void checkValidAttribute(final Field field) {
             Class<?> type = field.getType();
-            if (Convertor.JOHM_SUPPORTED_PRIMITIVES.contains(type) == false) {
+            if (converter.isSupportedPrimitive(type) == false) {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");
             }
@@ -378,7 +377,7 @@ public final class JOhmUtils {
 
         public static boolean checkSupportedPrimitiveClazz(
                 final Class<?> primitiveClazz) {
-            return Convertor.JOHM_SUPPORTED_PRIMITIVES.contains(primitiveClazz);
+            return converter.isSupportedPrimitive(primitiveClazz);
         }
     }
 

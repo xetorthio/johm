@@ -186,7 +186,7 @@ public final class JOhm {
                     fieldName = field.getName();
                     Object fieldValueObject = field.get(model);
                     if (fieldValueObject != null) {
-                        String fieldValue = Convertor.object2string(field, fieldValueObject);
+                        String fieldValue = JOhmUtils.converter.getAsString(field, fieldValueObject);
                         hashedObject.put(fieldName, fieldValue);
                     }
 
@@ -357,7 +357,7 @@ public final class JOhm {
             field.setAccessible(true);
             field.set(
                     newInstance,
-                    Convertor.string2object(field,
+                    JOhmUtils.converter.getAsObject(field,
                             hashedObject.get(field.getName())));
         }
         if (field.isAnnotationPresent(Reference.class)) {

@@ -12,11 +12,11 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.SimpleTimeZone;
 
-public class Convertor {
+public class ConverterImpl implements Converter {
 
-    public static final Set<Class<?>> JOHM_SUPPORTED_PRIMITIVES = new HashSet<Class<?>>();
+    private final Set<Class<?>> JOHM_SUPPORTED_PRIMITIVES = new HashSet<Class<?>>();
 
-    static {
+    public ConverterImpl() {
         JOHM_SUPPORTED_PRIMITIVES.add(String.class);
         JOHM_SUPPORTED_PRIMITIVES.add(Byte.class);
         JOHM_SUPPORTED_PRIMITIVES.add(byte.class);
@@ -39,21 +39,25 @@ public class Convertor {
         JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
     }
 
-    static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
 
-    static {
+    {
         sdf.setTimeZone(new SimpleTimeZone(0, "GMT"));
     }
 
-    static Object string2object(final Field field, final String value) {
-        return string2object(field.getType(), value);
+    public Object getAsObject(Field field, String value) {
+        return getAsObject(field.getType(), value);
     }
 
-    public static String object2string(final Field field, final Object value) {
-        return object2string(field.getType(), value);
+    public String getAsString(Field field, Object value) {
+        return getAsString(field.getType(), value);
     }
 
-    public static Object string2object(final Class<?> type, final String value) {
+    public boolean isSupportedPrimitive(Class<?> cls) {
+        return JOHM_SUPPORTED_PRIMITIVES.contains(cls); 
+    }
+
+    public Object getAsObject(Class<?> type, String value) {
         if (type.equals(Byte.class) || type.equals(byte.class)) {
             return new Byte(value);
         }
@@ -131,7 +135,7 @@ public class Convertor {
         return value;
     }
 
-    public static String object2string(final Class<?> type, final Object value) {
+    public String getAsString(Class<?> type, Object value) {
         if (Date.class.equals(type)) {
             return sdf.format((Date)value);
         }
