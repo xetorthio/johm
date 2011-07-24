@@ -118,7 +118,7 @@ public class ConvertorTest extends Assert {
         assertEquals(BigInteger.valueOf(10999L), converted);
 
         // Date
-        value = "2011-07-23 22:20:10.064+0000";
+        value = "1311459610064";
         converted = converter.getAsObject(Date.class, value);
         assertTrue(converted.getClass().equals(Date.class));
         assertEquals(new Date(1311459610064L), converted);
@@ -222,6 +222,12 @@ public class ConvertorTest extends Assert {
         converted = converter.getAsObject(User.class, value);
         assertTrue(converted.getClass().equals(String.class));
         assertEquals(value, converted);
+
+        // Date
+        value = "-1311459610064";
+        converted = converter.getAsObject(Date.class, value);
+        assertTrue(converted.getClass().equals(Date.class));
+        assertEquals(new Date(-1311459610064L), converted);
     }
 
     @Test

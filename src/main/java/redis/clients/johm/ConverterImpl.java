@@ -3,14 +3,10 @@ package redis.clients.johm;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.SimpleTimeZone;
 
 public class ConverterImpl implements Converter {
 
@@ -37,12 +33,6 @@ public class ConverterImpl implements Converter {
         JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
         JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
-    }
-
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
-
-    {
-        sdf.setTimeZone(new SimpleTimeZone(0, "GMT"));
     }
 
     public Object getAsObject(Field field, String value) {
@@ -110,11 +100,7 @@ public class ConverterImpl implements Converter {
             if (value == null) {
                 return null;
             }
-            try {
-                return sdf.parse(value);
-            } catch (ParseException e) {
-                throw new IllegalArgumentException(e);
-            }
+            return new Date(Long.parseLong(value));
         }
 
         if (type.isEnum() || type.equals(Enum.class)) {
@@ -137,7 +123,7 @@ public class ConverterImpl implements Converter {
 
     public String getAsString(Class<?> type, Object value) {
         if (Date.class.equals(type)) {
-            return sdf.format((Date)value);
+            return "" + ((Date)value).getTime();
         }
         return value.toString();
     }
