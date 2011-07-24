@@ -164,7 +164,7 @@ public final class JOhmUtils {
         return type;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public static boolean isNullOrEmpty(final Object obj) {
         if (obj == null) {
             return true;
@@ -199,19 +199,7 @@ public final class JOhmUtils {
     static final class Validator {
         static void checkValidAttribute(final Field field) {
             Class<?> type = field.getType();
-            if ((type.equals(Byte.class) || type.equals(byte.class))
-                    || type.equals(Character.class) || type.equals(char.class)
-                    || type.equals(Short.class) || type.equals(short.class)
-                    || type.equals(Integer.class) || type.equals(int.class)
-                    || type.equals(Float.class) || type.equals(float.class)
-                    || type.equals(Double.class) || type.equals(double.class)
-                    || type.equals(Long.class) || type.equals(long.class)
-                    || type.equals(Boolean.class) || type.equals(boolean.class)
-                    || type.equals(BigDecimal.class)
-                    || type.equals(BigInteger.class)
-                    || type.equals(String.class)
-                    || type.equals(Date.class)) {
-            } else {
+            if (Convertor.JOHM_SUPPORTED_PRIMITIVES.contains(type) == false) {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");
             }
@@ -390,34 +378,12 @@ public final class JOhmUtils {
 
         public static boolean checkSupportedPrimitiveClazz(
                 final Class<?> primitiveClazz) {
-            return JOHM_SUPPORTED_PRIMITIVES.contains(primitiveClazz);
+            return Convertor.JOHM_SUPPORTED_PRIMITIVES.contains(primitiveClazz);
         }
     }
 
-    private static final Set<Class<?>> JOHM_SUPPORTED_PRIMITIVES = new HashSet<Class<?>>();
     private static final Set<Class<?>> JOHM_SUPPORTED_ANNOTATIONS = new HashSet<Class<?>>();
     static {
-        JOHM_SUPPORTED_PRIMITIVES.add(String.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Byte.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(byte.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Character.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(char.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Short.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(short.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Integer.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(int.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Float.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(float.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Double.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(double.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Long.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(long.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Boolean.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
-        JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
-
         JOHM_SUPPORTED_ANNOTATIONS.add(Array.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(Attribute.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(CollectionList.class);

@@ -7,10 +7,37 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.SimpleTimeZone;
 
 public class Convertor {
+
+    public static final Set<Class<?>> JOHM_SUPPORTED_PRIMITIVES = new HashSet<Class<?>>();
+
+    static {
+        JOHM_SUPPORTED_PRIMITIVES.add(String.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Byte.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(byte.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Character.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(char.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Short.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(short.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Integer.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(int.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Float.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(float.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Double.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(double.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Long.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(long.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Boolean.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
+    }
 
     static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
 
