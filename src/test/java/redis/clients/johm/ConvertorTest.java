@@ -14,6 +14,8 @@ public class ConvertorTest extends Assert {
 
     Converter converter = new ConverterImpl();
 
+    enum TestEnum { TEST1, TEST2 }
+
     @Test
     public void testSupportedConvertorsUnsignedValues() {
         // boolean
@@ -122,6 +124,12 @@ public class ConvertorTest extends Assert {
         converted = converter.getAsObject(Date.class, value);
         assertTrue(converted.getClass().equals(Date.class));
         assertEquals(new Date(1311459610064L), converted);
+
+        // enum
+        value = "TEST2";
+        converted = converter.getAsObject(TestEnum.class, value);
+        assertEquals(converted.getClass(), TestEnum.class);
+        assertEquals(TestEnum.TEST2, converted);
     }
 
     @Test
@@ -235,9 +243,6 @@ public class ConvertorTest extends Assert {
         String value = "10";
         Object converted = converter.getAsObject(new int[] {}.getClass(),
                 value);
-        assertNull(converted);
-
-        converted = converter.getAsObject(Enum.class, value);
         assertNull(converted);
 
         converted = converter.getAsObject(Collection.class, value);

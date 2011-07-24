@@ -33,6 +33,7 @@ public class ConverterImpl implements Converter {
         JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
         JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Enum.class);
     }
 
     public Object getAsObject(Field field, String value) {
@@ -44,6 +45,9 @@ public class ConverterImpl implements Converter {
     }
 
     public boolean isSupportedPrimitive(Class<?> cls) {
+        if (cls.isEnum()) {
+            return true;
+        }
         return JOHM_SUPPORTED_PRIMITIVES.contains(cls); 
     }
 
@@ -103,9 +107,8 @@ public class ConverterImpl implements Converter {
             return new Date(Long.parseLong(value));
         }
 
-        if (type.isEnum() || type.equals(Enum.class)) {
-            // return Enum.valueOf(type, value);
-            return null; // TODO: handle these
+        if (value != null && (type.isEnum() || type.equals(Enum.class))) {
+            return Enum.valueOf((Class<? extends Enum>)type, value);
         }
 
         // Raw Collections are unsupported
