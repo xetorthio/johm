@@ -146,7 +146,7 @@ applicationContext.xml
 		<property name="maxIdle" value="8" />
 	</bean>
 
-	<bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+	<bean id="jedisPool" class="redis.clients.jedis.JedisPool" destroy-method="destroy">
 		<constructor-arg index="0" ref="poolConfig" />
 		<constructor-arg index="1" value="localhost" />
 		<constructor-arg index="2" value="6379" />
