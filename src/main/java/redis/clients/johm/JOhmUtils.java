@@ -215,25 +215,64 @@ public final class JOhmUtils {
                     return '\u0000';
                 }
             }
-            if (type.equals(Short.class) || type.equals(short.class)) {
+            if (type.equals(short.class)) {
+                if ( value == null) {
+                    return 0;
+                }
                 return new Short(value);
             }
-            if (type.equals(Integer.class) || type.equals(int.class)) {
+            if (type.equals(Short.class)) {
+                if ( value == null) {
+                    return null;
+                }
+                return new Short(value);
+            }
+            if (type.equals(int.class)) {
                 if (value == null) {
                     return 0;
                 }
                 return new Integer(value);
             }
-            if (type.equals(Float.class) || type.equals(float.class)) {
+            if (type.equals(Integer.class)) {
+                if (value == null) {
+                    return null;
+                }
+                return new Integer(value);
+            }
+            if (type.equals(float.class)) {
                 if (value == null) {
                     return 0f;
                 }
                 return new Float(value);
             }
-            if (type.equals(Double.class) || type.equals(double.class)) {
+            if (type.equals(Float.class)) {
+                if (value == null) {
+                    return null;
+                }
+                return new Float(value);
+            }
+            if (type.equals(double.class)) {
+                if ( value == null) {
+                    return 0.0;
+                }
                 return new Double(value);
             }
-            if (type.equals(Long.class) || type.equals(long.class)) {
+            if (type.equals(Double.class)) {
+                if ( value == null ) {
+                    return null;
+                }
+                return new Double(value);
+            }
+            if (type.equals(long.class)) {
+                if ( value == null) {
+                    return 0L;
+                }
+                return new Long(value);
+            }
+            if (type.equals(Long.class)) {
+                if ( value == null) {
+                    return null;
+                }
                 return new Long(value);
             }
             if (type.equals(Boolean.class) || type.equals(boolean.class)) {
