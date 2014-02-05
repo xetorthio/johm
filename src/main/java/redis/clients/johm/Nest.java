@@ -1,5 +1,6 @@
 package redis.clients.johm;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,8 +11,10 @@ import redis.clients.jedis.TransactionBlock;
 
 public class Nest<T> {
     private static final String COLON = ":";
+    private static final String SPACE = " ";
     private StringBuilder sb;
     private String key;
+    private ArrayList<String> keys;
     private JedisPool jedisPool;
 
     public void setJedisPool(JedisPool jedisPool) {
@@ -46,7 +49,9 @@ public class Nest<T> {
         sb = null;
         return generatedKey;
     }
-
+    public List<String> keys() {
+        return keys;
+    }
     private void prefix() {
         if (sb == null) {
             sb = new StringBuilder();
@@ -75,7 +80,13 @@ public class Nest<T> {
         sb.append(COLON);
         return this;
     }
-
+    public Nest<T> next() {
+        if(keys==null) {
+            keys=new java.util.ArrayList<String>();
+        }
+        keys.add(key());
+        return this;
+    }
     // Redis Common Operations
     public String set(String value) {
         Jedis jedis = getResource();
@@ -184,6 +195,12 @@ public class Nest<T> {
         return members;
     }
 
+    public Set<String> sinter() {
+        Jedis jedis = getResource();
+        Set<String> members = jedis.sinter((String[])keys.toArray(new String[0]));
+        returnResource(jedis);
+        return members;
+    }
     // Redis List Operations
     public Long rpush(String string) {
         Jedis jedis = getResource();
