@@ -9,6 +9,7 @@ import java.util.Set;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmException;
+import redis.clients.johm.JOhmExceptionMeta;
 import redis.clients.johm.JOhmUtils;
 import redis.clients.johm.Nest;
 
@@ -73,13 +74,16 @@ public class RedisSortedSet<T> implements Set<T> {
                                 JOhmUtils.getId(element).toString()) > 0;
                 indexValue(element);
             } catch (SecurityException e) {
-                throw new JOhmException(e);
+                throw new JOhmException(e, JOhmExceptionMeta.SECURITY_EXCEPTION);
             } catch (IllegalArgumentException e) {
-                throw new JOhmException(e);
+                throw new JOhmException(e,
+                        JOhmExceptionMeta.ILLEGAL_ARGUMENT_EXCEPTION);
             } catch (IllegalAccessException e) {
-                throw new JOhmException(e);
+                throw new JOhmException(e,
+                        JOhmExceptionMeta.ILLEGAL_ACCESS_EXCEPTION);
             } catch (NoSuchFieldException e) {
-                throw new JOhmException(e);
+                throw new JOhmException(e,
+                        JOhmExceptionMeta.NO_SUCH_FIELD_EXCEPTION);
             }
         }
         return success;

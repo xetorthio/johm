@@ -1,5 +1,6 @@
 package redis.clients.johm;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -120,8 +121,10 @@ public class SearchTest extends JOhmTestBase {
         List<User> users = JOhm.find(User.class, "likes", item.getId());
 
         assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user2.getId(), users.get(1).getId());
+        Long[] controlSet = { user1.getId(), user2.getId() };
+        assertTrue(users.get(0).getId() != users.get(1).getId());
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(0).getId()) >= 0);
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(1).getId()) >= 0);
     }
 
     @Test
@@ -159,8 +162,10 @@ public class SearchTest extends JOhmTestBase {
 
         users = JOhm.find(User.class, "threeLatestPurchases", item0.getId());
         assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user3.getId(), users.get(1).getId());
+        Long[] controlSet = { user1.getId(), user3.getId() };
+        assertTrue(users.get(0).getId() != users.get(1).getId());
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(0).getId()) >= 0);
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(1).getId()) >= 0);
     }
 
     @Test
@@ -182,8 +187,10 @@ public class SearchTest extends JOhmTestBase {
         List<User> users = JOhm.find(User.class, "purchases", item.getId());
 
         assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user2.getId(), users.get(1).getId());
+        Long[] controlSet = { user1.getId(), user2.getId() };
+        assertTrue(users.get(0).getId() != users.get(1).getId());
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(0).getId()) >= 0);
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(1).getId()) >= 0);
     }
 
     @Test
@@ -206,8 +213,10 @@ public class SearchTest extends JOhmTestBase {
                 .getId());
 
         assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user2.getId(), users.get(1).getId());
+        Long[] controlSet = { user1.getId(), user2.getId() };
+        assertTrue(users.get(0).getId() != users.get(1).getId());
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(0).getId()) >= 0);
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(1).getId()) >= 0);
     }
 
     @Test
@@ -230,8 +239,10 @@ public class SearchTest extends JOhmTestBase {
                 .getId());
 
         assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user2.getId(), users.get(1).getId());
+        Long[] controlSet = { user1.getId(), user2.getId() };
+        assertTrue(users.get(0).getId() != users.get(1).getId());
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(0).getId()) >= 0);
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(1).getId()) >= 0);
     }
 
     @Test
@@ -251,8 +262,10 @@ public class SearchTest extends JOhmTestBase {
         List<User> users = JOhm.find(User.class, "country", somewhere.getId());
 
         assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user2.getId(), users.get(1).getId());
+        Long[] controlSet = { user1.getId(), user2.getId() };
+        assertTrue(users.get(0).getId() != users.get(1).getId());
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(0).getId()) >= 0);
+        assertTrue(Arrays.binarySearch(controlSet, 0, controlSet.length, users.get(1).getId()) >= 0);
     }
 
     @Test
