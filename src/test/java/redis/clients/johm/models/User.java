@@ -14,8 +14,10 @@ import redis.clients.johm.Id;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.Model;
 import redis.clients.johm.Reference;
+import redis.clients.johm.SupportAll;
 
 @Model
+@SupportAll
 public class User {
     @Id
     private Long id;

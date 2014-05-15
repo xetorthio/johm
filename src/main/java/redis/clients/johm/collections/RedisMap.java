@@ -11,9 +11,8 @@ import java.util.Set;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Nest;
-import redis.clients.johm.JOhmUtils.Convertor;
 import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
+import redis.clients.johm.Nest;
 
 /**
  * RedisMap is a JOhm-internal Map implementation to serve as a proxy for the
@@ -105,7 +104,7 @@ public class RedisMap<K, V> implements Map<K, V> {
 
         if (!JOhmUtils.isNullOrEmpty(valueKey)) {
             if (johmValueType == JOhmCollectionDataType.PRIMITIVE) {
-                value = (V) Convertor.convert(valueClazz, valueKey);
+                value = (V) JOhmUtils.converter.getAsObject(valueClazz, valueKey);
             } else if (johmValueType == JOhmCollectionDataType.MODEL) {
                 value = JOhm.<V> get(valueClazz, Integer.parseInt(valueKey));
             }
@@ -123,7 +122,7 @@ public class RedisMap<K, V> implements Map<K, V> {
         for (String key : nest.cat(JOhmUtils.getId(owner)).cat(field.getName())
                 .hkeys()) {
             if (johmKeyType == JOhmCollectionDataType.PRIMITIVE) {
-                keys.add((K) JOhmUtils.Convertor.convert(keyClazz, key));
+                keys.add((K) JOhmUtils.converter.getAsObject(keyClazz, key));
             } else if (johmKeyType == JOhmCollectionDataType.MODEL) {
                 keys.add(JOhm.<K> get(keyClazz, Integer.parseInt(key)));
             }
@@ -204,13 +203,13 @@ public class RedisMap<K, V> implements Map<K, V> {
         for (Map.Entry<String, String> entry : savedHash.entrySet()) {
             if (johmKeyType == JOhmCollectionDataType.PRIMITIVE
                     && johmValueType == JOhmCollectionDataType.PRIMITIVE) {
-                savedKey = (K) JOhmUtils.Convertor.convert(keyClazz, entry
+                savedKey = (K) JOhmUtils.converter.getAsObject(keyClazz, entry
                         .getKey());
-                savedValue = (V) JOhmUtils.Convertor.convert(valueClazz, entry
+                savedValue = (V) JOhmUtils.converter.getAsObject(valueClazz, entry
                         .getValue());
             } else if (johmKeyType == JOhmCollectionDataType.PRIMITIVE
                     && johmValueType == JOhmCollectionDataType.MODEL) {
-                savedKey = (K) JOhmUtils.Convertor.convert(keyClazz, entry
+                savedKey = (K) JOhmUtils.converter.getAsObject(keyClazz, entry
                         .getKey());
                 savedValue = JOhm.<V> get(valueClazz, Integer.parseInt(entry
                         .getValue()));
@@ -218,7 +217,7 @@ public class RedisMap<K, V> implements Map<K, V> {
                     && johmValueType == JOhmCollectionDataType.PRIMITIVE) {
                 savedKey = JOhm.<K> get(keyClazz, Integer.parseInt(entry
                         .getKey()));
-                savedValue = (V) JOhmUtils.Convertor.convert(valueClazz, entry
+                savedValue = (V) JOhmUtils.converter.getAsObject(valueClazz, entry
                         .getValue());
             } else if (johmKeyType == JOhmCollectionDataType.MODEL
                     && johmValueType == JOhmCollectionDataType.MODEL) {

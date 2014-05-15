@@ -10,9 +10,8 @@ import java.util.ListIterator;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Nest;
-import redis.clients.johm.JOhmUtils.Convertor;
 import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
+import redis.clients.johm.Nest;
 
 /**
  * RedisList is a JOhm-internal List implementation to serve as a proxy for the
@@ -81,7 +80,7 @@ public class RedisList<T> implements java.util.List<T> {
                 .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(key)) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                element = (T) Convertor.convert(elementClazz, key);
+                element = (T) JOhmUtils.converter.getAsObject(elementClazz, key);
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 element = JOhm.<T> get(elementClazz, Integer.valueOf(key));
             }
@@ -252,7 +251,7 @@ public class RedisList<T> implements java.util.List<T> {
                 field.getName()).lrange(0, -1);
         for (String key : keys) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                elements.add((T) Convertor.convert(elementClazz, key));
+                elements.add((T) JOhmUtils.converter.getAsObject(elementClazz, key));
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
             }

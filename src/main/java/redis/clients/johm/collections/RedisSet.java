@@ -9,9 +9,8 @@ import java.util.Set;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Nest;
-import redis.clients.johm.JOhmUtils.Convertor;
 import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
+import redis.clients.johm.Nest;
 
 /**
  * RedisSet is a JOhm-internal Set implementation to serve as a proxy for the
@@ -174,7 +173,7 @@ public class RedisSet<T> implements Set<T> {
         Set<T> elements = new HashSet<T>();
         for (String key : keys) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                elements.add((T) Convertor.convert(elementClazz, key));
+                elements.add((T) JOhmUtils.converter.getAsObject(elementClazz, key));
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
             }

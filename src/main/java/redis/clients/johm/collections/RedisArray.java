@@ -6,9 +6,8 @@ import java.lang.reflect.Field;
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
 import redis.clients.johm.JOhmUtils;
-import redis.clients.johm.Nest;
-import redis.clients.johm.JOhmUtils.Convertor;
 import redis.clients.johm.JOhmUtils.JOhmCollectionDataType;
+import redis.clients.johm.Nest;
 
 /**
  * RedisArray is a JOhm-internal 1-Dimensional Array implementation to serve as
@@ -97,7 +96,7 @@ public class RedisArray<T> {
                 .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(key)) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                element = (T) Convertor.convert(elementClazz, key);
+                element = (T) JOhmUtils.converter.getAsObject(elementClazz, key);
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 element = JOhm.<T> get(elementClazz, Integer.valueOf(key));
             }

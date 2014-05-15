@@ -137,6 +137,32 @@ For more usage examples check the tests.
 
 And you are done!
 
+## How do I use it with Spring?
+
+applicationContext.xml
+
+	<bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+		<property name="minIdle" value="1" />
+		<property name="maxIdle" value="8" />
+	</bean>
+
+	<bean id="jedisPool" class="redis.clients.jedis.JedisPool" destroy-method="destroy">
+		<constructor-arg index="0" ref="poolConfig" />
+		<constructor-arg index="1" value="localhost" />
+		<constructor-arg index="2" value="6379" />
+		<constructor-arg index="3" value="2000" />
+	</bean>
+
+	<bean id="redisOhm" class="redis.clients.johm.JOhm" factory-method="setPool" scope="singleton" >
+		<constructor-arg ref="jedisPool" />
+	</bean>
+
+	<bean id="userDao" class="com.mypackage.UserDaoImpl" />
+
+And now you can use directly in your UserDaoImpl:
+
+	JOhm.expire(entity, seconds);
+
 ## License
 
 Copyright (c) 2010 Gaurav Sharma and Jonathan Leibiusky

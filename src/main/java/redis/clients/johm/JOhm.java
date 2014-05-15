@@ -186,8 +186,8 @@ public final class JOhm {
                     fieldName = field.getName();
                     Object fieldValueObject = field.get(model);
                     if (fieldValueObject != null) {
-                        hashedObject
-                                .put(fieldName, fieldValueObject.toString());
+                        String fieldValue = JOhmUtils.converter.getAsString(field, fieldValueObject);
+                        hashedObject.put(fieldName, fieldValue);
                     }
 
                 }
@@ -201,8 +201,8 @@ public final class JOhm {
                         if (saveChildren) {
                             save(child, saveChildren); // some more work to do
                         }
-                        hashedObject.put(fieldName, String.valueOf(JOhmUtils
-                                .getId(child)));
+                        hashedObject.put(fieldName,
+                                String.valueOf(JOhmUtils.getId(child)));
                     }
                 }
                 if (field.isAnnotationPresent(Indexed.class)) {
@@ -212,12 +212,10 @@ public final class JOhm {
                         fieldValue = JOhmUtils.getId(fieldValue);
                     }
                     if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
-                        nest.cat(fieldName).cat(fieldValue).sadd(
-                                String.valueOf(JOhmUtils.getId(model)));
+                        nest.cat(fieldName).cat(fieldValue)
+                                .sadd(String.valueOf(JOhmUtils.getId(model)));
                     }
                 }
-                // always add to the all set, to support getAll
-                nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
             }
         } catch (IllegalArgumentException e) {
             throw new JOhmException(e);
@@ -227,6 +225,11 @@ public final class JOhm {
 
         nest.multi(new TransactionBlock() {
             public void execute() throws JedisException {
+                // to support getAll
+                if (model.getClass().isAnnotationPresent(SupportAll.class)) {
+                    nest.cat("all")
+                            .sadd(String.valueOf(JOhmUtils.getId(model)));
+                }
                 del(nest.cat(JOhmUtils.getId(model)).key());
                 hmset(nest.cat(JOhmUtils.getId(model)).key(), hashedObject);
             }
@@ -252,6 +255,19 @@ public final class JOhm {
      */
     public static boolean delete(Class<?> clazz, long id) {
         return delete(clazz, id, true, false);
+    }
+
+    /**
+     * Set expiration period of model
+     * 
+     * @param <T>
+     * @param model
+     * @param seconds
+     * @return Long
+     */
+    public static <T> Long expire(T model, int seconds) {
+        Nest<T> nest = initIfNeeded(model);
+        return nest.cat(JOhmUtils.getId(model)).expire(seconds);
     }
 
     @SuppressWarnings("unchecked")
@@ -283,8 +299,8 @@ public final class JOhm {
                             fieldValue = JOhmUtils.getId(fieldValue);
                         }
                         if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
-                            nest.cat(field.getName()).cat(fieldValue).srem(
-                                    String.valueOf(id));
+                            nest.cat(field.getName()).cat(fieldValue)
+                                    .srem(String.valueOf(id));
                         }
                     }
                 }
@@ -309,9 +325,9 @@ public final class JOhm {
                     if (field.isAnnotationPresent(Array.class)) {
                         field.setAccessible(true);
                         Array annotation = field.getAnnotation(Array.class);
-                        RedisArray redisArray = new RedisArray(annotation
-                                .length(), annotation.of(), nest, field,
-                                persistedModel);
+                        RedisArray redisArray = new RedisArray(
+                                annotation.length(), annotation.of(), nest,
+                                field, persistedModel);
                         redisArray.clear();
                     }
                 }
@@ -328,8 +344,9 @@ public final class JOhm {
      * 
      * @param jedisPool
      */
-    public static void setPool(final JedisPool jedisPool) {
+    public static JedisPool setPool(final JedisPool jedisPool) {
         JOhm.jedisPool = jedisPool;
+        return jedisPool;
     }
 
     private static void fillField(final Map<String, String> hashedObject,
@@ -338,8 +355,10 @@ public final class JOhm {
         JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
         if (field.isAnnotationPresent(Attribute.class)) {
             field.setAccessible(true);
-            field.set(newInstance, JOhmUtils.Convertor.convert(field,
-                    hashedObject.get(field.getName())));
+            field.set(
+                    newInstance,
+                    JOhmUtils.converter.getAsObject(field,
+                            hashedObject.get(field.getName())));
         }
         if (field.isAnnotationPresent(Reference.class)) {
             field.setAccessible(true);
@@ -382,6 +401,7 @@ public final class JOhm {
     @SuppressWarnings("unchecked")
     public static <T> Set<T> getAll(Class<?> clazz) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
+        JOhmUtils.Validator.checkSupportAll(clazz);
         Set<Object> results = null;
         Nest nest = new Nest(clazz);
         nest.setJedisPool(jedisPool);
