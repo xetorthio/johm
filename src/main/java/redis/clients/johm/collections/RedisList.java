@@ -209,6 +209,14 @@ public class RedisList<T> implements java.util.List<T> {
     }
 
     private void internalIndexedAdd(int index, T element) {
+    	if(index<0 || index>size()){
+    		throw new IndexOutOfBoundsException();
+    	}
+    	if(index == size()){
+    		nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).rpush(
+                    element.toString());
+    	}
+    	
         if (element != null) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
                 nest.cat(JOhmUtils.getId(owner)).cat(field.getName()).lset(
