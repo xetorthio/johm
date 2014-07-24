@@ -35,9 +35,6 @@ public class CollectionsTest extends JOhmTestBase {
         User user = new User();
         JOhm.save(user);
         user.getLikes().add(item);
-        user.getLikes().remove(0);
-        user.getLikes().add(0, item);
-        
 
         User savedUser = JOhm.get(User.class, user.getId());
 
