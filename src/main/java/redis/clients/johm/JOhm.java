@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import redis.clients.jedis.JedisException;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
+import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.johm.collections.RedisArray;
 
 /**
@@ -19,6 +19,7 @@ import redis.clients.johm.collections.RedisArray;
  * operations between the Object Models at one end and Redis Persistence Models
  * on the other.
  */
+@SuppressWarnings("deprecation")
 public final class JOhm {
     private static JedisPool jedisPool;
 
@@ -50,7 +51,7 @@ public final class JOhm {
     public static <T> T get(Class<?> clazz, long id) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
 
-        Nest nest = new Nest(clazz);
+        Nest<T> nest = (Nest<T>) new Nest<>(clazz);
         nest.setJedisPool(jedisPool);
         if (!nest.cat(id).exists()) {
             return null;
@@ -115,7 +116,7 @@ public final class JOhm {
         if (JOhmUtils.isNullOrEmpty(attributeValue)) {
             throw new InvalidFieldException();
         }
-        Nest nest = new Nest(clazz);
+        Nest<T> nest = (Nest<T>) new Nest<>(clazz);
         nest.setJedisPool(jedisPool);
         Set<String> modelIdStrings = nest.cat(attributeName)
                 .cat(attributeValue).smembers();
@@ -147,11 +148,11 @@ public final class JOhm {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T save(final Object model, boolean saveChildren) {
+	public static <T> T save(final Object model, boolean saveChildren) {
         if (!isNew(model)) {
             delete(model.getClass(), JOhmUtils.getId(model));
         }
-        final Nest nest = initIfNeeded(model);
+        final Nest<?> nest = initIfNeeded(model);
 
         final Map<String, String> hashedObject = new HashMap<String, String>();
         Map<RedisArray<Object>, Object[]> pendingArraysToPersist = null;
@@ -168,6 +169,7 @@ public final class JOhm {
                 }
                 if (field.isAnnotationPresent(Array.class)) {
                     Object[] backingArray = (Object[]) field.get(model);
+                    JOhmUtils.Validator.checkNotNull(backingArray, field);                    
                     int actualLength = backingArray == null ? 0
                             : backingArray.length;
                     JOhmUtils.Validator.checkValidArrayBounds(field,
@@ -188,8 +190,9 @@ public final class JOhm {
                     if (fieldValueObject != null) {
                         hashedObject
                                 .put(fieldName, fieldValueObject.toString());
+                    } else {
+                    	JOhmUtils.Validator.checkNotNull(fieldValueObject, field);
                     }
-
                 }
                 if (field.isAnnotationPresent(Reference.class)) {
                     fieldName = JOhmUtils.getReferenceKeyName(field);
@@ -203,6 +206,8 @@ public final class JOhm {
                         }
                         hashedObject.put(fieldName, String.valueOf(JOhmUtils
                                 .getId(child)));
+                    } else {
+                    	JOhmUtils.Validator.checkNotNull(child, field);
                     }
                 }
                 if (field.isAnnotationPresent(Indexed.class)) {
@@ -210,6 +215,8 @@ public final class JOhm {
                     if (fieldValue != null
                             && field.isAnnotationPresent(Reference.class)) {
                         fieldValue = JOhmUtils.getId(fieldValue);
+                    } else {
+                    	JOhmUtils.Validator.checkNotNull(fieldValue, field);
                     }
                     if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
                         nest.cat(fieldName).cat(fieldValue).sadd(
@@ -254,14 +261,13 @@ public final class JOhm {
         return delete(clazz, id, true, false);
     }
 
-    @SuppressWarnings("unchecked")
     public static boolean delete(Class<?> clazz, long id,
             boolean deleteIndexes, boolean deleteChildren) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
         boolean deleted = false;
         Object persistedModel = get(clazz, id);
         if (persistedModel != null) {
-            Nest nest = new Nest(persistedModel);
+            Nest<?> nest = new Nest<>(persistedModel);
             nest.setJedisPool(jedisPool);
             if (deleteIndexes) {
                 // think about promoting deleteChildren as default behavior so
@@ -309,7 +315,7 @@ public final class JOhm {
                     if (field.isAnnotationPresent(Array.class)) {
                         field.setAccessible(true);
                         Array annotation = field.getAnnotation(Array.class);
-                        RedisArray redisArray = new RedisArray(annotation
+                        RedisArray<?> redisArray = new RedisArray<>(annotation
                                 .length(), annotation.of(), nest, field,
                                 persistedModel);
                         redisArray.clear();
@@ -352,23 +358,21 @@ public final class JOhm {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static void fillArrayField(final Nest nest, final Object model,
+    private static void fillArrayField(final Nest<?> nest, final Object model,
             final Field field) throws IllegalArgumentException,
             IllegalAccessException {
         if (field.isAnnotationPresent(Array.class)) {
             field.setAccessible(true);
             Array annotation = field.getAnnotation(Array.class);
-            RedisArray redisArray = new RedisArray(annotation.length(),
+            RedisArray<?> redisArray = new RedisArray<>(annotation.length(),
                     annotation.of(), nest, field, model);
             field.set(model, redisArray.read());
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Nest initIfNeeded(final Object model) {
+    private static Nest<?> initIfNeeded(final Object model) {
         Long id = JOhmUtils.getId(model);
-        Nest nest = new Nest(model);
+        Nest<?> nest = new Nest<>(model);
         nest.setJedisPool(jedisPool);
         if (id == null) {
             // lazily initialize id, nest, collections
@@ -383,7 +387,7 @@ public final class JOhm {
     public static <T> Set<T> getAll(Class<?> clazz) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
         Set<Object> results = null;
-        Nest nest = new Nest(clazz);
+        Nest<T> nest = (Nest<T>) new Nest<>(clazz);
         nest.setJedisPool(jedisPool);
         Set<String> modelIdStrings = nest.cat("all").smembers();
         if (modelIdStrings != null) {

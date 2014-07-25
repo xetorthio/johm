@@ -8,6 +8,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
 
+@SuppressWarnings("deprecation")
 public class Nest<T> {
     private static final String COLON = ":";
     private StringBuilder sb;
@@ -98,7 +99,7 @@ public class Nest<T> {
         return incr;
     }
 
-    public List<Object> multi(TransactionBlock transaction) {
+	public List<Object> multi(TransactionBlock transaction) {
         Jedis jedis = getResource();
         List<Object> multi = jedis.multi(transaction);
         returnResource(jedis);
