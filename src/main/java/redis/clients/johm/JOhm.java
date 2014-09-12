@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import redis.clients.jedis.JedisException;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
 import redis.clients.johm.collections.RedisArray;
@@ -226,7 +225,7 @@ public final class JOhm {
         }
 
         nest.multi(new TransactionBlock() {
-            public void execute() throws JedisException {
+            public void execute() {
                 del(nest.cat(JOhmUtils.getId(model)).key());
                 hmset(nest.cat(JOhmUtils.getId(model)).key(), hashedObject);
             }

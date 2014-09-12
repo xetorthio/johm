@@ -192,4 +192,8 @@ public class User {
             return false;
         return true;
     }
+
+    public String toString() {
+        return String.format("User(%d, %s)", getId(), getName());
+    }
 }

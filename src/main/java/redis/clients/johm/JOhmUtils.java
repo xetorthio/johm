@@ -249,8 +249,7 @@ public final class JOhmUtils {
             }
 
             if (type.isEnum() || type.equals(Enum.class)) {
-                // return Enum.valueOf(type, value);
-                return null; // TODO: handle these
+                return Enum.valueOf((Class<Enum>)type, value);
             }
 
             // Raw Collections are unsupported
@@ -280,7 +279,8 @@ public final class JOhmUtils {
                     || type.equals(Boolean.class) || type.equals(boolean.class)
                     || type.equals(BigDecimal.class)
                     || type.equals(BigInteger.class)
-                    || type.equals(String.class)) {
+                    || type.equals(String.class)
+                    || (type.isEnum() || type.equals(Enum.class))) {
             } else {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");

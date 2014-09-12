@@ -7,6 +7,7 @@ import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 
+import redis.clients.johm.models.FooEnum;
 import redis.clients.johm.models.User;
 
 public class ConvertorTest extends Assert {
@@ -215,13 +216,19 @@ public class ConvertorTest extends Assert {
     }
 
     @Test
+    public void testEnumConvertors() {
+        Object converted = JOhmUtils.Convertor.convert(FooEnum.class, "BAR");
+        assertEquals(FooEnum.BAR, converted);
+
+        converted = JOhmUtils.Convertor.convert(FooEnum.class, "FOO");
+        assertNotSame(FooEnum.BAZZ, converted);
+    }
+
+    @Test
     public void testUnsupportedConvertors() {
         String value = "10";
         Object converted = JOhmUtils.Convertor.convert(new int[] {}.getClass(),
                 value);
-        assertNull(converted);
-
-        converted = JOhmUtils.Convertor.convert(Enum.class, value);
         assertNull(converted);
 
         converted = JOhmUtils.Convertor.convert(Collection.class, value);
