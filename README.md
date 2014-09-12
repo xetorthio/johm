@@ -81,7 +81,7 @@ class Item {
 enum Status {
     WAITING_FOR_MODERATION, VALID, FLAGGED
 }
-``
+```
 
 Initiating JOhm:
 
@@ -108,7 +108,7 @@ User storedUser = JOhm.get(User.class, 1);
 Deleting a User:
 
 ```java
-	JOhm.delete(User.class, 1);
+JOhm.delete(User.class, 1);
 ```
 
 Search for all users of age 30:
