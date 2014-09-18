@@ -1,13 +1,7 @@
 package redis.clients.johm;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
@@ -62,7 +56,7 @@ public final class JOhm {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <T> T get(Class<?> clazz, long id) {
+    public static <T> T get(Class<?> clazz, long id, String... ignoring) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
 
         Nest nest = new Nest(clazz);
@@ -75,10 +69,14 @@ public final class JOhm {
         try {
             newInstance = clazz.newInstance();
             JOhmUtils.loadId(newInstance, id);
-            JOhmUtils.initCollections(newInstance, nest);
+            JOhmUtils.initCollections(newInstance, nest, ignoring);
 
             Map<String, String> hashedObject = nest.cat(id).hgetAll();
-            for (Field field : JOhmUtils.gatherAllFields(clazz)) {
+            List<String> ignoredProperties = Arrays.asList(ignoring);
+            for (Field field : JOhmUtils.gatherAllFields(clazz, ignoring)) {
+                if (ignoredProperties.contains(field.getName()))
+                    continue;
+
                 fillField(hashedObject, newInstance, field);
                 fillArrayField(nest, newInstance, field);
             }
@@ -106,7 +104,7 @@ public final class JOhm {
      */
     @SuppressWarnings("unchecked")
     public static <T> List<T> find(Class<?> clazz, String attributeName,
-            Object attributeValue) {
+            Object attributeValue, String... ignoring) {
         JOhmUtils.Validator.checkValidModelClazz(clazz);
         List<Object> results = null;
         if (!JOhmUtils.Validator.isIndexable(attributeName)) {
@@ -139,7 +137,7 @@ public final class JOhm {
             results = new ArrayList<Object>();
             Object indexed = null;
             for (String modelIdString : modelIdStrings) {
-                indexed = get(clazz, Long.parseLong(modelIdString));
+                indexed = get(clazz, Long.parseLong(modelIdString), ignoring);
                 if (indexed != null) {
                     results.add(indexed);
                 }

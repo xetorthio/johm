@@ -105,10 +105,16 @@ Loading a persisted User:
 User storedUser = JOhm.get(User.class, 1);
 ```
 
+You can avoid properties being loaded:
+
+```java
+User userWithoutComments = JOhm.get(User.class, 1, "comments");
+```
+
 Checking if a User exists:
 
 ```java
-boolean user42Exists = JOhm.exists(User.class, 42);
+boolean user2Exists = JOhm.exists(User.class, 42);
 ```
 
 Deleting a User:
@@ -121,6 +127,12 @@ Search for all users of age 30:
 
 ```java
 List<User> users = JOhm.find(User.class, "age", "30");
+```
+
+Search for all users of age 30, without returning their favorite purchases:
+
+```java
+List<User> users = JOhm.find(User.class, "age", "30", "favoritePurchases");
 ```
 
 Model with a reference:
@@ -162,7 +174,7 @@ Item anItem = new Item();
 ...
 JOhm.save(anItem);
 	
-someOne.getPurchases.add(anItem);
+someOne.getPurchases().add(anItem);
 ```
 
 For more usage examples check the tests.

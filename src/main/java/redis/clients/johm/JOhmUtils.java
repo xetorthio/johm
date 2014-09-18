@@ -4,13 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import redis.clients.johm.collections.RedisList;
 import redis.clients.johm.collections.RedisMap;
@@ -42,11 +36,16 @@ public final class JOhmUtils {
     }
 
     @SuppressWarnings("unchecked")
-    static void initCollections(final Object model, final Nest<?> nest) {
+    static void initCollections(final Object model, final Nest<?> nest, String... ignoring) {
         if (model == null || nest == null) {
             return;
         }
+
+        List<String> ignoredProperties = Arrays.asList(ignoring);
         for (Field field : model.getClass().getDeclaredFields()) {
+            if (ignoredProperties.contains(field.getName()))
+                continue;
+
             field.setAccessible(true);
             try {
                 if (field.isAnnotationPresent(CollectionList.class)) {
@@ -178,13 +177,18 @@ public final class JOhmUtils {
         return false;
     }
 
-    static List<Field> gatherAllFields(Class<?> clazz) {
+    static List<Field> gatherAllFields(Class<?> clazz, String... ignoring) {
         List<Field> allFields = new ArrayList<Field>();
         for (Field field : clazz.getDeclaredFields()) {
             allFields.add(field);
         }
         while ((clazz = clazz.getSuperclass()) != null) {
             allFields.addAll(gatherAllFields(clazz));
+        }
+        for (String ignore: ignoring) {
+            if (allFields.contains(ignore)) {
+                allFields.remove(ignore);
+            }
         }
 
         return Collections.unmodifiableList(allFields);
