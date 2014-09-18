@@ -105,6 +105,12 @@ Loading a persisted User:
 User storedUser = JOhm.get(User.class, 1);
 ```
 
+Checking if a User exists:
+
+```java
+boolean user42Exists = JOhm.exists(User.class, 42);
+```
+
 Deleting a User:
 
 ```java

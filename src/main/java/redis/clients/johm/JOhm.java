@@ -38,6 +38,22 @@ public final class JOhm {
     }
 
     /**
+     * Check if the model with the given id exists in Redis.
+     *
+     * @param <T>
+     * @param clazz the entity class
+     * @param id the entity id
+     * @return whether the entity exists in Redis.
+     */
+    public static <T> boolean exists(Class<?> clazz, long id) {
+        JOhmUtils.Validator.checkValidModelClazz(clazz);
+
+        Nest nest = new Nest(clazz);
+        nest.setJedisPool(jedisPool);
+        return nest.cat(id).exists();
+    }
+
+    /**
      * Load the model persisted in Redis looking it up by its id and Class type.
      * 
      * @param <T>
