@@ -222,6 +222,9 @@ public class ConvertorTest extends Assert {
 
         converted = JOhmUtils.Convertor.convert(FooEnum.class, "FOO");
         assertNotSame(FooEnum.BAZZ, converted);
+
+        converted = JOhmUtils.Convertor.convert(FooEnum.class, null);
+        assertEquals(null, converted);
     }
 
     @Test

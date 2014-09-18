@@ -249,7 +249,7 @@ public final class JOhmUtils {
             }
 
             if (type.isEnum() || type.equals(Enum.class)) {
-                return Enum.valueOf((Class<Enum>)type, value);
+                return value == null ? null : Enum.valueOf((Class<Enum>)type, value);
             }
 
             // Raw Collections are unsupported
