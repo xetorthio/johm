@@ -55,7 +55,7 @@ public final class JOhmUtils {
                         CollectionList annotation = field
                                 .getAnnotation(CollectionList.class);
                         RedisList<Object> redisList = new RedisList<Object>(
-                                annotation.of(), nest, field, model);
+                                annotation.of(), nest, field, model, ignoring);
                         field.set(model, redisList);
                     }
                 }

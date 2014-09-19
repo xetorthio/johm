@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Arrays;
 
 import redis.clients.johm.Indexed;
 import redis.clients.johm.JOhm;
@@ -30,6 +31,7 @@ public class RedisList<T> implements java.util.List<T> {
     private final Field field;
     private final Object owner;
     private final String[] ignoring;
+    private final List<String> ignoredProperties;
 
     public RedisList(Class<? extends T> clazz, Nest<? extends T> nest,
             Field field, Object owner, String... ignoring) {
@@ -39,6 +41,7 @@ public class RedisList<T> implements java.util.List<T> {
         this.field = field;
         this.owner = owner;
         this.ignoring = ignoring;
+        this.ignoredProperties = Arrays.asList(ignoring);
     }
 
     public boolean add(T e) {
@@ -253,10 +256,13 @@ public class RedisList<T> implements java.util.List<T> {
         List<String> keys = nest.cat(JOhmUtils.getId(owner)).cat(
                 field.getName()).lrange(0, -1);
         for (String key : keys) {
+            if (ignoredProperties.contains(key))
+                continue;
+
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
                 elements.add((T) Convertor.convert(elementClazz, key));
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
-                elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
+                elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key), ignoring));
             }
         }
         return elements;
