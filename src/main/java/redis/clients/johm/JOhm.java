@@ -77,7 +77,7 @@ public final class JOhm {
                 if (ignoredProperties.contains(field.getName()))
                     continue;
 
-                fillField(hashedObject, newInstance, field);
+                fillField(hashedObject, newInstance, field, ignoring);
                 fillArrayField(nest, newInstance, field);
             }
 
@@ -346,7 +346,7 @@ public final class JOhm {
     }
 
     private static void fillField(final Map<String, String> hashedObject,
-            final Object newInstance, final Field field)
+            final Object newInstance, final Field field, String... ignoring)
             throws IllegalAccessException {
         JOhmUtils.Validator.checkAttributeReferenceIndexRules(field);
         if (field.isAnnotationPresent(Attribute.class)) {
@@ -360,7 +360,7 @@ public final class JOhm {
                     .getReferenceKeyName(field));
             if (serializedReferenceId != null) {
                 Long referenceId = Long.valueOf(serializedReferenceId);
-                field.set(newInstance, get(field.getType(), referenceId));
+                field.set(newInstance, get(field.getType(), referenceId, ignoring));
             }
         }
     }
