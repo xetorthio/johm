@@ -160,7 +160,7 @@ Comment aComment = new Comment();
 ...
 JOhm.save(aComment);
 
-someOne.getComments.add(aComment);
+someOne.getComments().add(aComment);
 ```
 
 Model with a set of nested models:
