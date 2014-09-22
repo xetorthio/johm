@@ -31,6 +31,11 @@ public final class JOhmUtils {
         return id;
     }
 
+    static String getModelKey(Class<?> clazz) {
+        Model model = clazz.getAnnotation(Model.class);
+        return model == null || model.value().equals("") ? clazz.getSimpleName() : model.value();
+    }
+
     static boolean isNew(final Object model) {
         return getId(model) == null;
     }

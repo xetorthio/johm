@@ -60,7 +60,9 @@ class User {
     private Item[] threeLatestPurchases;
 }
 
-@Model
+// The value() of @Model can be used to use a specific key in redis
+// If not set then the Java Class<?>.getSimpleName() is used as default
+@Model("Com")
 class Comment {
     @Id
     private Long id;

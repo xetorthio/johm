@@ -32,11 +32,11 @@ public class Nest<T> {
     }
 
     public Nest(Class<T> clazz) {
-        this.key = clazz.getSimpleName();
+        this.key = JOhmUtils.getModelKey(clazz);
     }
 
     public Nest(T model) {
-        this.key = model.getClass().getSimpleName();
+        this.key = JOhmUtils.getModelKey(model.getClass());
     }
 
     public String key() {
