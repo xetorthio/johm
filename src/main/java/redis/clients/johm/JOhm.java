@@ -209,7 +209,7 @@ public final class JOhm {
                     Object child = field.get(model);
                     if (child != null) {
                         if (JOhmUtils.getId(child) == null) {
-                            throw new MissingIdException();
+                            throw new MissingIdException(fieldName);
                         }
                         if (saveChildren) {
                             save(child, saveChildren); // some more work to do
