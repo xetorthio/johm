@@ -8,5 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Attribute {
-
+    /**
+     * Date format if the attribute is of type Date.
+     * @return the date format
+     */
+    public String date() default "yyyy-MM-dd";
 }

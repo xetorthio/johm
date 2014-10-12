@@ -174,7 +174,7 @@ public class RedisSet<T> implements Set<T> {
         Set<T> elements = new HashSet<T>();
         for (String key : keys) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                elements.add((T) Convertor.convert(elementClazz, key));
+                elements.add((T) Convertor.convert(field, elementClazz, key));
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key).intValue()));
             }

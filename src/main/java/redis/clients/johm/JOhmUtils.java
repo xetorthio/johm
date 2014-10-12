@@ -4,6 +4,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import redis.clients.johm.collections.RedisList;
@@ -205,10 +207,14 @@ public final class JOhmUtils {
 
     public final static class Convertor {
         static Object convert(final Field field, final String value) {
-            return convert(field.getType(), value);
+            return convert(field, field.getType(), value);
         }
 
-        public static Object convert(final Class<?> type, final String value) {
+        public static Object convert(final Class<?> type, String value) {
+            return convert(null, type, value);
+        }
+
+        public static Object convert(final Field field, final Class<?> type, final String value) {
             if (type.equals(Byte.class) || type.equals(byte.class)) {
                 return new Byte(value);
             }
@@ -259,6 +265,18 @@ public final class JOhmUtils {
 
             if (type.isEnum() || type.equals(Enum.class)) {
                 return value == null ? null : Enum.valueOf((Class<Enum>)type, value);
+            }
+
+            if (type.equals(Date.class)) {
+                Attribute attr = field.getAnnotation(Attribute.class);
+                if (attr != null) {
+                    try {
+                        return new SimpleDateFormat(attr.date()).parse(value);
+                    } catch (ParseException e) {
+                        throw new IllegalArgumentException(
+                                "Could not parse date `" + value + "` with pattern `" + attr.date() + "`.");
+                    }
+                }
             }
 
             // Raw Collections are unsupported
@@ -488,6 +506,7 @@ public final class JOhmUtils {
         JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
 
         JOHM_SUPPORTED_ANNOTATIONS.add(Array.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(Attribute.class);

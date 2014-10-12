@@ -1,6 +1,7 @@
 package redis.clients.johm;
 
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import redis.clients.jedis.JedisPool;
@@ -199,8 +200,14 @@ public final class JOhm {
                     fieldName = field.getName();
                     Object fieldValueObject = field.get(model);
                     if (fieldValueObject != null) {
-                        hashedObject
-                                .put(fieldName, fieldValueObject.toString());
+                        // date
+                        if (field.getType().equals(Date.class))
+                            hashedObject.put(fieldName,
+                                new SimpleDateFormat(field.getAnnotation(Attribute.class).date())
+                                        .format((Date) fieldValueObject)
+                            );
+                        else
+                            hashedObject.put(fieldName, fieldValueObject.toString());
                     }
 
                 }
