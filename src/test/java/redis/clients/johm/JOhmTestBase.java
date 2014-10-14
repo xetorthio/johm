@@ -19,10 +19,10 @@ public class JOhmTestBase extends Assert {
 
     protected void startJedisEngine() {
         if (benchmarkMode) {
-            jedisPool = new JedisPool(new JedisPoolConfig(), "localhost",
-                    Protocol.DEFAULT_PORT, 2000);
+            jedisPool = new JedisPool(new JedisPoolConfig(), "192.168.1.109",
+                    Protocol.DEFAULT_PORT, 2000, "redismaster");
         } else {
-            jedisPool = new JedisPool(new JedisPoolConfig(), "localhost");
+            jedisPool = new JedisPool(new JedisPoolConfig(), "192.168.1.109", Protocol.DEFAULT_PORT, 0, "redismaster");
         }
         JOhm.setPool(jedisPool);
         purgeRedis();

@@ -198,7 +198,8 @@ public final class JOhmUtils {
             return convert(field.getType(), value);
         }
 
-        public static Object convert(final Class<?> type, final String value) {
+        @SuppressWarnings("unchecked")
+		public static Object convert(@SuppressWarnings("rawtypes") final Class type, final String value) {
             if (type.equals(Byte.class) || type.equals(byte.class)) {
                 return new Byte(value);
             }
@@ -248,8 +249,7 @@ public final class JOhmUtils {
             }
 
             if (type.isEnum() || type.equals(Enum.class)) {
-                // return Enum.valueOf(type, value);
-                return null; // TODO: handle these
+                return getEnumFromString(type, value);
             }
 
             // Raw Collections are unsupported
@@ -266,6 +266,20 @@ public final class JOhmUtils {
         }
     }
 
+    static <T extends Enum<T>> T getEnumFromString(Class<T> clazz, String value)
+    {
+        if( clazz != null && value != null ) {
+            try {
+                return Enum.valueOf(clazz, value.trim().toUpperCase());
+            } catch(IllegalArgumentException ex){
+            	throw new IllegalArgumentException(clazz.getSimpleName()
+                        + " is not a supported Enum data type");
+            }
+        }
+        
+        return null;
+    }
+    
     static final class Validator {
         static void checkValidAttribute(final Field field) {
             Class<?> type = field.getType();
@@ -279,7 +293,8 @@ public final class JOhmUtils {
                     || type.equals(Boolean.class) || type.equals(boolean.class)
                     || type.equals(BigDecimal.class)
                     || type.equals(BigInteger.class)
-                    || type.equals(String.class)) {
+                    || type.equals(String.class)
+                    || type.isEnum()) {
             } else {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");
