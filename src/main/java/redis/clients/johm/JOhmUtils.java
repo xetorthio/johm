@@ -162,13 +162,12 @@ public final class JOhmUtils {
         return type;
     }
 
-    @SuppressWarnings("unchecked")
     public static boolean isNullOrEmpty(final Object obj) {
         if (obj == null) {
             return true;
         }
         if (obj.getClass().equals(Collection.class)) {
-            return ((Collection) obj).size() == 0;
+            return ((Collection<?>) obj).size() == 0;
         } else {
             if (obj.toString().trim().length() == 0) {
                 return true;
@@ -199,7 +198,8 @@ public final class JOhmUtils {
             return convert(field.getType(), value);
         }
 
-        public static Object convert(final Class<?> type, final String value) {
+        @SuppressWarnings("unchecked")
+		public static Object convert(@SuppressWarnings("rawtypes") final Class type, final String value) {
             if (type.equals(Byte.class) || type.equals(byte.class)) {
                 return new Byte(value);
             }
@@ -249,8 +249,7 @@ public final class JOhmUtils {
             }
 
             if (type.isEnum() || type.equals(Enum.class)) {
-                // return Enum.valueOf(type, value);
-                return null; // TODO: handle these
+                return getEnumFromString(type, value);
             }
 
             // Raw Collections are unsupported
@@ -267,6 +266,20 @@ public final class JOhmUtils {
         }
     }
 
+    static <T extends Enum<T>> T getEnumFromString(Class<T> clazz, String value)
+    {
+        if( clazz != null && value != null ) {
+            try {
+                return Enum.valueOf(clazz, value.trim().toUpperCase());
+            } catch(IllegalArgumentException ex){
+            	throw new IllegalArgumentException(clazz.getSimpleName()
+                        + " is not a supported Enum data type");
+            }
+        }
+        
+        return null;
+    }
+    
     static final class Validator {
         static void checkValidAttribute(final Field field) {
             Class<?> type = field.getType();
@@ -280,7 +293,8 @@ public final class JOhmUtils {
                     || type.equals(Boolean.class) || type.equals(boolean.class)
                     || type.equals(BigDecimal.class)
                     || type.equals(BigInteger.class)
-                    || type.equals(String.class)) {
+                    || type.equals(String.class)
+                    || type.isEnum()) {
             } else {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");
@@ -297,10 +311,12 @@ public final class JOhmUtils {
         static Long checkValidId(final Object model) {
             Long id = null;
             boolean idFieldPresent = false;
+            boolean idNotNullPresent = false;
             for (Field field : model.getClass().getDeclaredFields()) {
                 field.setAccessible(true);
                 if (field.isAnnotationPresent(Id.class)) {
                     Validator.checkValidIdType(field);
+                    idNotNullPresent = field.isAnnotationPresent(NotNull.class);
                     try {
                         id = (Long) field.get(model);
                         idFieldPresent = true;
@@ -315,6 +331,9 @@ public final class JOhmUtils {
             if (!idFieldPresent) {
                 throw new JOhmException(
                         "JOhm does not support a Model without an Id");
+            } else if (id == null && idNotNullPresent) {
+            	throw new JOhmException(
+                        "Not incremented Id field must have a default value");
             }
             return id;
         }
@@ -324,7 +343,7 @@ public final class JOhmUtils {
             if (annotations.length > 1) {
                 for (Annotation annotation : annotations) {
                     Class<?> annotationType = annotation.annotationType();
-                    if (annotationType.equals(Id.class)) {
+                    if (annotationType.equals(Id.class) || annotationType.equals(NotNull.class)) {
                         continue;
                     }
                     if (JOHM_SUPPORTED_ANNOTATIONS.contains(annotationType)) {
@@ -348,7 +367,17 @@ public final class JOhmUtils {
                 return false;
             }
         }
-
+        
+        static void checkNotNull(final Object fieldValue, final Field field) {
+        	if (fieldValue == null) {
+        		boolean isNotNullPresent = field.isAnnotationPresent(NotNull.class);
+        		if (isNotNullPresent) {
+        			throw new JOhmException(
+        					"Not null field must have a value");
+        		}
+        	}
+        }
+        
         static void checkValidModel(final Object model) {
             checkValidModelClazz(model.getClass());
         }
@@ -490,5 +519,6 @@ public final class JOhmUtils {
         JOHM_SUPPORTED_ANNOTATIONS.add(Indexed.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(Model.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(Reference.class);
+        JOHM_SUPPORTED_ANNOTATIONS.add(NotNull.class);
     }
 }
