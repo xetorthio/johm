@@ -38,7 +38,7 @@ public class RedisSortedSet<T> implements Set<T> {
                 .zrange(0, -1);
         Set<T> elements = new LinkedHashSet<T>();
         for (String id : ids) {
-            elements.add((T) JOhm.get(clazz, Integer.valueOf(id)));
+            elements.add((T) JOhm.get(clazz, Integer.valueOf(id).intValue()));
         }
         return elements;
     }
