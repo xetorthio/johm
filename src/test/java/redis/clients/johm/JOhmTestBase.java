@@ -1,6 +1,6 @@
 package redis.clients.johm;
 
-import org.apache.commons.pool.impl.GenericObjectPool.Config;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -19,10 +19,10 @@ public class JOhmTestBase extends Assert {
 
     protected void startJedisEngine() {
         if (benchmarkMode) {
-            jedisPool = new JedisPool(new Config(), "localhost",
+            jedisPool = new JedisPool(new GenericObjectPoolConfig(), "localhost",
                     Protocol.DEFAULT_PORT, 2000);
         } else {
-            jedisPool = new JedisPool(new Config(), "localhost");
+            jedisPool = new JedisPool(new GenericObjectPoolConfig(), "localhost");
         }
         JOhm.setPool(jedisPool);
         purgeRedis();

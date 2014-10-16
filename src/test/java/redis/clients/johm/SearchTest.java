@@ -1,6 +1,8 @@
 package redis.clients.johm;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -119,9 +121,11 @@ public class SearchTest extends JOhmTestBase {
 
         List<User> users = JOhm.find(User.class, "likes", item.getId());
 
-        assertEquals(2, users.size());
-        assertEquals(user1.getId(), users.get(0).getId());
-        assertEquals(user2.getId(), users.get(1).getId());
+        assertEquals("Size should be 2", 2, users.size());
+        List<Long> ids = new ArrayList<Long>();
+        for (User user: users) ids.add(user.getId());
+        assertTrue("User 1 should be retrieved " + ids, ids.contains(user1.getId()));
+        assertTrue("User 2 should be retrieved " + ids, ids.contains(user2.getId()));
     }
 
     @Test
