@@ -176,7 +176,7 @@ public class RedisSet<T> implements Set<T> {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
                 elements.add((T) Convertor.convert(elementClazz, key));
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
-                elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key)));
+                elements.add((T) JOhm.get(elementClazz, Integer.valueOf(key).intValue()));
             }
         }
         return elements;
