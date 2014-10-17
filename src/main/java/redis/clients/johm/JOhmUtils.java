@@ -274,7 +274,7 @@ public final class JOhmUtils {
                         return new SimpleDateFormat(attr.date()).parse(value);
                     } catch (ParseException e) {
                         throw new IllegalArgumentException(
-                                "Could not parse date `" + value + "` with pattern `" + attr.date() + "`.");
+                                "Could not parse value as date `" + value + "` with pattern `" + attr.date() + "`.");
                     }
                 }
             }
