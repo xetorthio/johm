@@ -307,6 +307,7 @@ public final class JOhmUtils {
                     || type.equals(BigDecimal.class)
                     || type.equals(BigInteger.class)
                     || type.equals(String.class)
+                    || type.equals(Date.class)
                     || (type.isEnum() || type.equals(Enum.class))) {
             } else {
                 throw new JOhmException(field.getType().getSimpleName()
