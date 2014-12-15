@@ -9,6 +9,12 @@ codebases to easily plug into Redis without the need to extend framework base cl
 
 Durable data storage is available via the Redis Append-only file (AOF). The default persistence strategy is Snapshotting.
 
+# About this fork
+
+The original JOhm is not maintained anymore, there's a lot of useful pull requests that are not being merged and the author is not responding.
+
+I need JOhm in my projects, so I forked it and will maintain it here. Go ahead if you have pull requests to merge from the original repository, I will merge them asap.
+
 ## What can I do with JOhm?
 JOhm is still in active development. The following features are currently available:
 
