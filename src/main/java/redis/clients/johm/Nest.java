@@ -10,13 +10,19 @@ import redis.clients.jedis.TransactionBlock;
 
 public class Nest<T> {
     private static final String COLON = ":";
+    private static final String SPACE = " ";
     private StringBuilder sb;
     private String key;
+    private List<String> keys;
     private JedisPool jedisPool;
 
     public void setJedisPool(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         checkRedisLiveness();
+    }
+
+    public List<String> keys() {
+        return keys;
     }
 
     public Nest<T> fork() {
@@ -53,6 +59,14 @@ public class Nest<T> {
             sb.append(key);
             sb.append(COLON);
         }
+    }
+
+    public Nest<T> next() {
+        if (keys == null) {
+            keys = new java.util.ArrayList<String>();
+        }
+        keys.add(key());
+        return this;
     }
 
     public Nest<T> cat(int id) {
@@ -175,6 +189,13 @@ public class Nest<T> {
         Long reply = jedis.srem(key(), member);
         returnResource(jedis);
         return reply;
+    }
+
+    public Set<String> sinter() {
+        Jedis jedis = getResource();
+        Set<String> members = jedis.sinter((String[]) keys.toArray(new String[0]));
+        returnResource(jedis);
+        return members;
     }
 
     public Set<String> smembers() {
