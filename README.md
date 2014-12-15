@@ -15,6 +15,9 @@ The original JOhm is not maintained anymore, there's a lot of useful pull reques
 
 I need JOhm in my projects, so I forked it and will maintain it here. Go ahead if you have pull requests to merge from the original repository, I will merge them asap.
 
+I've already added support for enums, dates and some improvements like ignoring some field retrieval. I also already merged PR 39 which is useful
+ for querying on multiple fields at the same time.
+
 ## What can I do with JOhm?
 JOhm is still in active development. The following features are currently available:
 
