@@ -246,12 +246,21 @@ public final class JOhmUtils {
                 return new Float(value);
             }
             if (type.equals(Double.class) || type.equals(double.class)) {
+                if (value == null) {
+                    return 0d;
+                }
                 return new Double(value);
             }
             if (type.equals(Long.class) || type.equals(long.class)) {
+                if (value == null) {
+                    return 0l;
+                }
                 return new Long(value);
             }
             if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                if (value == null) {
+                    return false;
+                }
                 return new Boolean(value);
             }
 
