@@ -34,7 +34,7 @@ I will release a version of this JOhm fork every time I fix a bug or merge a PR.
         </snapshots>
     </repository>
 </repositories>
-``
+```
 
 Then just add the dependency to this JOhm version, last released version is currently **0.6.1**:
 
