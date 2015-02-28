@@ -18,6 +18,35 @@ I need JOhm in my projects, so I forked it and will maintain it here. Go ahead i
 I've already added support for enums, dates and some improvements like ignoring some field retrieval. I also already merged PR 39 which is useful
  for querying on multiple fields at the same time.
 
+
+# Use this fork
+
+I will release a version of this JOhm fork every time I fix a bug or merge a PR. In order to use this fork you need to add a custom maven repository in your pom.xml:
+
+```xml
+<repositories>
+    <repository>
+        <id>johm-mvn-repo</id>
+        <url>https://raw.github.com/agrison/johm/mvn-repo/</url>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+    </repository>
+</repositories>
+``
+
+Then just add the dependency to this JOhm version, last released version is currently **0.6.1**:
+
+```xml
+<dependency>
+    <groupId>redis</groupId>
+    <artifactId>johm</artifactId>
+    <version>0.6.1</version>
+    <type>jar</type>
+</dependency>
+```
+
 ## What can I do with JOhm?
 JOhm is still in active development. The following features are currently available:
 
