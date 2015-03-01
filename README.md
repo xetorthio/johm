@@ -36,7 +36,7 @@ I will release a version of this JOhm fork every time I fix a bug or merge a PR.
 </repositories>
 ```
 
-Then just add the dependency to this JOhm version, last released version is currently **0.6.1**:
+Then just add the dependency to this JOhm version, last released version is currently **0.6.1** (last snapshot is **0.6.2-SNAPSHOT**):
 
 ```xml
 <dependency>
