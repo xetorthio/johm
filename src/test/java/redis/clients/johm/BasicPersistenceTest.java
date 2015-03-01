@@ -219,4 +219,35 @@ public class BasicPersistenceTest extends JOhmTestBase {
         Set<User> users = JOhm.getAll(User.class);
         assertEquals(2, users.size());
     }
+
+    @Test
+    public void testSelectDb() {
+        User user = new User();
+        user.setName("foo");
+        user = JOhm.save(user);
+        JOhm.selectDb(7);
+        assertNull(JOhm.get(User.class, user.getId()));
+        JOhm.selectDb(0); // by default
+        assertNotNull(JOhm.get(User.class, user.getId()));
+    }
+
+    @Test
+    public void testFlushDb() {
+        User user = new User();
+        user.setName("foo");
+        JOhm.selectDb(7);
+        user = JOhm.save(user);
+
+        JOhm.selectDb(1);
+        User user2 = new User();
+        user2.setName("bar");
+        user2 = JOhm.save(user2);
+
+        JOhm.flushDb();
+        assertNull(JOhm.get(User.class, user2.getId()));
+
+        JOhm.selectDb(7);
+        assertNotNull(JOhm.get(User.class, user.getId()));
+    }
 }
+

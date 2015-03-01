@@ -270,11 +270,11 @@ public class Nest<T> {
         return zadd;
     }
 
-    private void returnResource(final Jedis jedis) {
+    public void returnResource(final Jedis jedis) {
         jedisPool.returnResource(jedis);
     }
 
-    private Jedis getResource() {
+    public Jedis getResource() {
         Jedis jedis = jedisPool.getResource();
         // check for selected database
         if (!jedis.getDB().equals(JOhm.dbIndex))

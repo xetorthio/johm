@@ -19,7 +19,7 @@ public class NestTest extends JOhmTestBase {
         assertEquals("users:123:name", users.cat(123).cat("name").key());
 
         users.cat(123).cat("name").set("foo");
-        Jedis jedis = jedisPool.getResource();
+        Jedis jedis = users.getResource();
         assertEquals("foo", jedis.get("users:123:name"));
         jedisPool.returnBrokenResource(jedis);
         assertEquals("foo", users.cat(123).cat("name").get());

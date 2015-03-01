@@ -496,6 +496,8 @@ public final class JOhm {
 	public static void flushDb() {
 		Jedis jedis = jedisPool.getResource();
 		try {
+			if (!jedis.getDB().equals(JOhm.dbIndex))
+				jedis.select((int) JOhm.dbIndex);
 			jedis.flushDB();
 		} finally {
 			jedisPool.returnResource(jedis);
