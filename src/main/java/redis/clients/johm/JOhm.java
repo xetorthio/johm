@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
 import redis.clients.johm.collections.RedisArray;
@@ -15,6 +16,9 @@ import redis.clients.johm.collections.RedisArray;
  */
 public final class JOhm {
 	private static JedisPool jedisPool;
+
+	/** Current db index, on new redis connection it is set by default to 0 */
+	public static long dbIndex = 0L;
 
 	/**
 	 * Read the id from the given model. This operation will typically be useful
@@ -477,5 +481,24 @@ public final class JOhm {
 			}
 		}
 		return (Set<T>) results;
+	}
+
+	/**
+	 * Select the current database.
+	 */
+	public static void selectDb(long dbIndex) {
+		JOhm.dbIndex = dbIndex;
+	}
+
+	/**
+	 * Flush the current database.
+	 */
+	public static void flushDb() {
+		Jedis jedis = jedisPool.getResource();
+		try {
+			jedis.flushDB();
+		} finally {
+			jedisPool.returnResource(jedis);
+		}
 	}
 }

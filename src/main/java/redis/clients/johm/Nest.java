@@ -275,8 +275,10 @@ public class Nest<T> {
     }
 
     private Jedis getResource() {
-        Jedis jedis;
-        jedis = jedisPool.getResource();
+        Jedis jedis = jedisPool.getResource();
+        // check for selected database
+        if (!jedis.getDB().equals(JOhm.dbIndex))
+            jedis.select((int) JOhm.dbIndex);
         return jedis;
     }
 
