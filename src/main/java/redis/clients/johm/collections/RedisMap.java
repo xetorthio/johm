@@ -107,7 +107,7 @@ public class RedisMap<K, V> implements Map<K, V> {
             if (johmValueType == JOhmCollectionDataType.PRIMITIVE) {
                 value = (V) Convertor.convert(field, valueClazz, valueKey);
             } else if (johmValueType == JOhmCollectionDataType.MODEL) {
-                value = JOhm.<V> get(valueClazz, Integer.parseInt(valueKey));
+                value = JOhm.<V> get(valueClazz, Long.valueOf(valueKey));
             }
         }
         return value;
