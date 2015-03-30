@@ -47,6 +47,9 @@ Then just add the dependency to this JOhm version, last released version is curr
 </dependency>
 ```
 
+JOhm currently uses **Jedis `2.7.0`**
+
+
 ## What can I do with JOhm?
 JOhm is still in active development. The following features are currently available:
 
