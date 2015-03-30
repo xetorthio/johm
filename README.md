@@ -36,13 +36,13 @@ I will release a version of this JOhm fork every time I fix a bug or merge a PR.
 </repositories>
 ```
 
-Then just add the dependency to this JOhm version, last released version is currently **0.6.1** (last snapshot is **0.6.2-SNAPSHOT**):
+Then just add the dependency to this JOhm version, last released version is currently **0.6.2** (last snapshot is **0.6.3-SNAPSHOT**):
 
 ```xml
 <dependency>
     <groupId>redis</groupId>
     <artifactId>johm</artifactId>
-    <version>0.6.1</version>
+    <version>0.6.2</version>
     <type>jar</type>
 </dependency>
 ```
