@@ -265,11 +265,20 @@ public final class JOhm {
 					Object fieldValueObject = field.get(model);
 					if (fieldValueObject != null) {
 						// date
-						if (field.getType().equals(Date.class))
-							hashedObject.put(fieldName,
-									new SimpleDateFormat(field.getAnnotation(Attribute.class).date())
-											.format((Date) fieldValueObject)
-							);
+						if (field.getType().equals(Date.class)) {
+							try {
+								hashedObject.put(fieldName,
+														new SimpleDateFormat(field.getAnnotation(Attribute.class).date())
+															.format((Date) fieldValueObject)
+								);
+							} catch (Throwable e) {
+								// try with a fallback date format
+								hashedObject.put(fieldName,
+														new SimpleDateFormat(Attribute.DEFAULT_DATE_FORMAT)
+																.format((Date) fieldValueObject)
+								);
+							}
+						}
 						else
 							hashedObject.put(fieldName, fieldValueObject.toString());
 					}

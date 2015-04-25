@@ -282,8 +282,12 @@ public final class JOhmUtils {
                     try {
                         return new SimpleDateFormat(attr.date()).parse(value);
                     } catch (ParseException e) {
-                        throw new IllegalArgumentException(
+                        try {
+                            return new SimpleDateFormat(Attribute.DEFAULT_DATE_FORMAT).parse(value);
+                        } catch (ParseException ee) {
+                            throw new IllegalArgumentException(
                                 "Could not parse value as date `" + value + "` with pattern `" + attr.date() + "`.");
+                        }
                     }
                 }
             }
