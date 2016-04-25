@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>redis</groupId>
 	<artifactId>johm</artifactId>
-	<version>0.6.5-SNAPSHOT</version>
+	<version>0.6.6-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -25,6 +25,12 @@
             <version>2.2</version>
             <scope>test</scope>
         </dependency>
+		<dependency>
+		  <groupId>com.github.kstyrc</groupId>
+		  <artifactId>embedded-redis</artifactId>
+		  <version>0.6</version>
+		  <scope>test</scope>
+		</dependency>
     </dependencies>
 
 	<distributionManagement>

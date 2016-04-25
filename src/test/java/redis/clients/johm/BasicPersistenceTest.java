@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import redis.clients.johm.models.Book;
 import redis.clients.johm.models.Country;
 import redis.clients.johm.models.FaultyModel;
 import redis.clients.johm.models.Item;
@@ -218,6 +219,33 @@ public class BasicPersistenceTest extends JOhmTestBase {
 
         Set<User> users = JOhm.getAll(User.class);
         assertEquals(2, users.size());
+    }
+    
+    @Test(expected = JOhmException.class)
+    public void getAllNotSupported() {
+        Book book = new Book();
+        book.setName("title");
+        JOhm.save(book);
+        book = new Book();
+        book.setName("another title");
+        JOhm.save(book);
+
+        JOhm.getAll(Book.class);
+    }
+    
+    @Test
+    public void TestExpiration() throws InterruptedException {
+        Book book = new Book();
+        book.setName("expritation title");
+        JOhm.save(book);
+        JOhm.expire(book, 1);
+        Book savedBook = JOhm.get(Book.class, book.getId());
+        assertEquals(book.getName(), savedBook.getName());
+
+        // wait of expire
+        Thread.sleep(1500L);
+        savedBook = JOhm.get(Book.class, book.getId());
+        assertNull(savedBook);
     }
 
     @Test

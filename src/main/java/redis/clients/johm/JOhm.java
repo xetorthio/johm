@@ -309,8 +309,6 @@ public final class JOhm {
 								String.valueOf(JOhmUtils.getId(model)));
 					}
 				}
-				// always add to the all set, to support getAll
-				nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
 			}
 		} catch (IllegalArgumentException e) {
 			throw new JOhmException(e);
@@ -320,6 +318,10 @@ public final class JOhm {
 
 		nest.multi(new TransactionBlock() {
 			public void execute() {
+			    // to support getAll
+                if (model.getClass().isAnnotationPresent(SupportAll.class)) {
+                    nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
+                }
 				del(nest.cat(JOhmUtils.getId(model)).key());
 				hmset(nest.cat(JOhmUtils.getId(model)).key(), hashedObject);
 			}
@@ -346,6 +348,18 @@ public final class JOhm {
 	public static boolean delete(Class<?> clazz, long id) {
 		return delete(clazz, id, true, false);
 	}
+
+    /**
+     * Set expiration period of model
+     * @param <T>
+     * @param model
+     * @param seconds
+     * @return Long
+     */
+    public static <T> Long expire(T model, int seconds) {
+        Nest<T> nest = initIfNeeded(model);
+        return nest.cat(JOhmUtils.getId(model)).expire(seconds);
+    }
 
 	@SuppressWarnings("unchecked")
 	public static boolean delete(Class<?> clazz, long id,
@@ -421,8 +435,9 @@ public final class JOhm {
 	 *
 	 * @param jedisPool
 	 */
-	public static void setPool(final JedisPool jedisPool) {
+    public static JedisPool setPool(final JedisPool jedisPool) {
 		JOhm.jedisPool = jedisPool;
+		return jedisPool;
 	}
 
 	private static void fillField(final Map<String, String> hashedObject,
@@ -475,6 +490,7 @@ public final class JOhm {
 	@SuppressWarnings("unchecked")
 	public static <T> Set<T> getAll(Class<?> clazz) {
 		JOhmUtils.Validator.checkValidModelClazz(clazz);
+        JOhmUtils.Validator.checkSupportAll(clazz);
 		Set<Object> results = null;
 		Nest nest = new Nest(clazz);
 		nest.setJedisPool(jedisPool);
