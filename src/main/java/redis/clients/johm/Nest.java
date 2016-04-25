@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
+import redis.clients.util.Pool;
 
 public class Nest<T> {
     private static final String COLON = ":";
@@ -14,10 +14,10 @@ public class Nest<T> {
     private StringBuilder sb;
     private String key;
     private List<String> keys;
-    private JedisPool jedisPool;
+    private Pool<Jedis> jedisPool;
 
-    public void setJedisPool(JedisPool jedisPool) {
-        this.jedisPool = jedisPool;
+    public void setPool(Pool<Jedis> pool) {
+        this.jedisPool = pool;
         checkRedisLiveness();
     }
 

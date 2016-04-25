@@ -5,9 +5,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
 import redis.clients.johm.collections.RedisArray;
+import redis.clients.util.Pool;
 
 /**
  * JOhm serves as the delegate responsible for heavy-lifting all mapping
@@ -15,7 +15,7 @@ import redis.clients.johm.collections.RedisArray;
  * on the other.
  */
 public final class JOhm {
-	private static JedisPool jedisPool;
+	private static Pool<Jedis> pool;
 
 	/** Current db index, on new redis connection it is set by default to 0 */
 	public static long dbIndex = 0L;
@@ -48,7 +48,7 @@ public final class JOhm {
 		JOhmUtils.Validator.checkValidModelClazz(clazz);
 
 		Nest nest = new Nest(clazz);
-		nest.setJedisPool(jedisPool);
+		nest.setPool(pool);
 		return nest.cat(id).exists();
 	}
 
@@ -65,7 +65,7 @@ public final class JOhm {
 		JOhmUtils.Validator.checkValidModelClazz(clazz);
 
 		Nest nest = new Nest(clazz);
-		nest.setJedisPool(jedisPool);
+		nest.setPool(pool);
 		if (!nest.cat(id).exists()) {
 			return null;
 		}
@@ -131,7 +131,7 @@ public final class JOhm {
 			throw new InvalidFieldException();
 		}
 		Nest nest = new Nest(clazz);
-		nest.setJedisPool(jedisPool);
+		nest.setPool(pool);
 		Set<String> modelIdStrings = nest.cat(attributeName)
 				.cat(attributeValue).smembers();
 		if (modelIdStrings != null) {
@@ -164,7 +164,7 @@ public final class JOhm {
 		List<Object> results = null;
 
 		Nest nest = new Nest(clazz);
-		nest.setJedisPool(jedisPool);
+		nest.setPool(pool);
 
 		for (NVField pair : attributes) {
 			String attributeName;
@@ -369,7 +369,7 @@ public final class JOhm {
 		Object persistedModel = get(clazz, id);
 		if (persistedModel != null) {
 			Nest nest = new Nest(persistedModel);
-			nest.setJedisPool(jedisPool);
+			nest.setPool(pool);
 			if (deleteIndexes) {
 				// think about promoting deleteChildren as default behavior so
 				// that this field lookup gets folded into that
@@ -433,11 +433,11 @@ public final class JOhm {
 	/**
 	 * Inject JedisPool into JOhm. This is a mandatory JOhm setup operation.
 	 *
-	 * @param jedisPool
+	 * @param pool
 	 */
-    public static JedisPool setPool(final JedisPool jedisPool) {
-		JOhm.jedisPool = jedisPool;
-		return jedisPool;
+    public static Pool<Jedis> setPool(final Pool<Jedis> pool) {
+		JOhm.pool = pool;
+		return pool;
 	}
 
 	private static void fillField(final Map<String, String> hashedObject,
@@ -477,7 +477,7 @@ public final class JOhm {
 	private static Nest initIfNeeded(final Object model) {
 		Long id = JOhmUtils.getId(model);
 		Nest nest = new Nest(model);
-		nest.setJedisPool(jedisPool);
+		nest.setPool(pool);
 		if (id == null) {
 			// lazily initialize id, nest, collections
 			id = nest.cat("id").incr();
@@ -493,7 +493,7 @@ public final class JOhm {
         JOhmUtils.Validator.checkSupportAll(clazz);
 		Set<Object> results = null;
 		Nest nest = new Nest(clazz);
-		nest.setJedisPool(jedisPool);
+		nest.setPool(pool);
 		Set<String> modelIdStrings = nest.cat("all").smembers();
 		if (modelIdStrings != null) {
 			results = new HashSet<Object>();
@@ -519,13 +519,13 @@ public final class JOhm {
 	 * Flush the current database.
 	 */
 	public static void flushDb() {
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = pool.getResource();
 		try {
 			if (!jedis.getDB().equals(JOhm.dbIndex))
 				jedis.select((int) JOhm.dbIndex);
 			jedis.flushDB();
 		} finally {
-			jedisPool.returnResource(jedis);
+			pool.returnResource(jedis);
 		}
 	}
 }
