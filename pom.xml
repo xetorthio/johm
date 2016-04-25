@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>redis</groupId>
 	<artifactId>johm</artifactId>
-	<version>0.6.5</version>
+	<version>0.6.6-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
