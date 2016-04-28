@@ -17,6 +17,8 @@ I need JOhm in my projects, so I forked it and will maintain it here. Go ahead i
 
 I've already added support for enums, dates and some improvements like ignoring some field retrieval. I also already merged PR 39 which is useful
  for querying on multiple fields at the same time.
+ 
+[CHANGELOG](CHANGELOG.md)
 
 
 # Use this fork
