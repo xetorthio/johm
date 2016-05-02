@@ -44,10 +44,8 @@ public class JOhmTestSentinelBase extends JOhmTestBase {
     
     protected static void startEmbeddedRedis() throws IOException {
         cluster = RedisCluster.builder().ephemeral().sentinelCount(3).quorumSize(2)
-                .replicationGroup("master1", 1)
-                .replicationGroup("master2", 1)
-                .replicationGroup("master3", 1)
-                .sentinelStartingPort(Protocol.DEFAULT_PORT)
+                .replicationGroup("master1", 2)
+                .sentinelStartingPort(Protocol.DEFAULT_PORT+1000)
                 .build();
         cluster.start();
         
