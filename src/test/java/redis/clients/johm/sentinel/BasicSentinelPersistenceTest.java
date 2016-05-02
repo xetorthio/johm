@@ -254,6 +254,7 @@ public class BasicSentinelPersistenceTest extends JOhmTestSentinelBase {
 
     @Test
     public void testSelectDb() {
+        JOhm.selectDb(0);
         User user = new User();
         user.setName("foo");
         user = JOhm.save(user);
@@ -280,6 +281,8 @@ public class BasicSentinelPersistenceTest extends JOhmTestSentinelBase {
 
         JOhm.selectDb(7);
         assertNotNull(JOhm.get(User.class, user.getId()));
+        JOhm.flushDb();
+        assertNull(JOhm.get(User.class, user.getId()));
     }
 }
 

@@ -250,6 +250,7 @@ public class BasicPersistenceTest extends JOhmTestBase {
 
     @Test
     public void testSelectDb() {
+        JOhm.selectDb(0);
         User user = new User();
         user.setName("foo");
         user = JOhm.save(user);
@@ -276,6 +277,8 @@ public class BasicPersistenceTest extends JOhmTestBase {
 
         JOhm.selectDb(7);
         assertNotNull(JOhm.get(User.class, user.getId()));
+        JOhm.flushDb();
+        assertNull(JOhm.get(User.class, user.getId()));
     }
 }
 
