@@ -11,12 +11,13 @@ import org.junit.BeforeClass;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Protocol;
+import redis.clients.util.Pool;
 import redis.embedded.RedisServer;
 
 public class JOhmTestBase extends Assert {
-    protected JedisPool jedisPool;
+    protected Pool<Jedis> jedisPool;
     protected volatile static boolean benchmarkMode;
-    private static RedisServer redisServer;
+    protected static RedisServer redisServer;
 
     @Before
     public void startUp() {
