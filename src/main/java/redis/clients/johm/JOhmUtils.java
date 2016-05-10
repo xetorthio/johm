@@ -266,9 +266,11 @@ public final class JOhmUtils {
 
             // Higher precision folks
             if (type.equals(BigDecimal.class)) {
+                if (value == null) return BigDecimal.ZERO;
                 return new BigDecimal(value);
             }
             if (type.equals(BigInteger.class)) {
+                if (value == null) return BigInteger.ZERO;
                 return new BigInteger(value);
             }
 
