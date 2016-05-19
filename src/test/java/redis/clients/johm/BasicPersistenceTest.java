@@ -1,5 +1,6 @@
 package redis.clients.johm;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
@@ -246,6 +247,105 @@ public class BasicPersistenceTest extends JOhmTestBase {
         Thread.sleep(1500L);
         savedBook = JOhm.get(Book.class, book.getId());
         assertNull(savedBook);
+    }
+    
+    @Test
+    public void shouldDeleteIndexesAndNotLeaveThemOrphaned() {
+        User user = new User();
+        user.setName("i_will_be_deleted");
+        user = JOhm.save(user);
+
+        List<Object> users = JOhm.find(User.class, "name", "i_will_be_deleted");
+        assertEquals(1, users.size());
+        
+        JOhm.delete(User.class, user.getId());
+        
+        Nest usersNest = new Nest("User");
+        usersNest.setPool(jedisPool);
+        assertEquals("User", usersNest.key());
+        assertFalse(usersNest.cat(user.getId()).exists());
+        assertFalse(usersNest.cat("name").cat("i_will_be_deleted").exists());
+        
+        users = JOhm.find(User.class, "name", "i_will_be_deleted");
+        assertEquals(0, users.size());
+    }
+    
+    @Test
+    public void shouldNotDeleteIndexesWhenThereAreMultipleEntries() {
+        User user1 = new User();
+        String indexName = "IndexDeleteTest";
+        user1.setName(indexName);
+        user1 = JOhm.save(user1);
+        
+        User user2 = new User();
+        user2.setName(indexName);
+        user2 = JOhm.save(user2);
+
+        List<Object> users = JOhm.find(User.class, "name", indexName);
+        assertEquals(2, users.size());
+        
+        JOhm.delete(User.class, user1.getId());
+        
+        Nest usersNest = new Nest("User");
+        usersNest.setPool(jedisPool);
+
+        // first user
+        assertEquals("User", usersNest.key());
+        assertFalse(usersNest.cat(user1.getId()).exists());
+        assertTrue(usersNest.cat("name").cat(indexName).exists());
+        
+        // second user
+        assertEquals("User", usersNest.key());
+        assertTrue(usersNest.cat(user2.getId()).exists());
+        assertTrue(usersNest.cat("name").cat(indexName).exists());
+        
+        users = JOhm.find(User.class, "name", indexName);
+        assertEquals(1, users.size());
+        
+        JOhm.delete(User.class, user2.getId());
+        
+        assertFalse("Index: IndexDeleteTest should not exist", usersNest.cat("name").cat(indexName).exists());
+        users = JOhm.find(User.class, "name", indexName);
+        assertEquals(0, users.size());
+    }
+    
+    @Test
+    public void whenSavingExistingModelIndexesShouldNotBeLeftOrphaned() {
+        User user = new User();
+        String indexName = "i_will_be_then_deleted_in_the_end";
+        user.setName(indexName);
+        user.setRoom("A");
+        user = JOhm.save(user);
+
+        Nest usersNest = new Nest("User");
+        usersNest.setPool(jedisPool);
+        assertEquals("User", usersNest.key());
+        assertTrue(usersNest.cat(user.getId()).exists());
+        assertTrue(usersNest.cat("name").cat(indexName).exists());
+        
+        List<Object> users = JOhm.find(User.class, "name", indexName);
+        assertEquals(1, users.size());
+        
+        String newIndexName = "new_index";
+        user.setName(newIndexName);
+        user.setRoom("B");
+        JOhm.save(user, true);
+        
+        assertTrue(usersNest.cat(user.getId()).exists());
+        assertTrue(usersNest.cat("name").cat(newIndexName).exists());
+        assertFalse(usersNest.cat("name").cat(indexName).exists());
+        
+        JOhm.delete(User.class, user.getId());
+        
+        assertFalse(usersNest.cat(user.getId()).exists());
+        assertFalse(usersNest.cat("name").cat(newIndexName).exists());
+        assertFalse(usersNest.cat("name").cat(indexName).exists());
+        
+        users = JOhm.find(User.class, "name", indexName);
+        assertEquals(0, users.size());
+        
+        users = JOhm.find(User.class, "name", newIndexName);
+        assertEquals(0, users.size());
     }
 
     @Test

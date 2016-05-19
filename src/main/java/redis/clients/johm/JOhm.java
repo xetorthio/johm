@@ -227,7 +227,7 @@ public final class JOhm {
 	@SuppressWarnings("unchecked")
 	public static <T> T save(final Object model, boolean saveChildren) {
 		if (!isNew(model)) {
-			delete(model.getClass(), JOhmUtils.getId(model));
+			delete(model.getClass(), JOhmUtils.getId(model), true, saveChildren);
 		}
 		final Nest nest = initIfNeeded(model);
 
