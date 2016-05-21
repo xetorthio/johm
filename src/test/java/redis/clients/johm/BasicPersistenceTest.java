@@ -235,7 +235,7 @@ public class BasicPersistenceTest extends JOhmTestBase {
     }
     
     @Test
-    public void TestExpiration() throws InterruptedException {
+    public void shouldExpireModel() throws InterruptedException {
         Book book = new Book();
         book.setName("expritation title");
         JOhm.save(book);
@@ -247,6 +247,50 @@ public class BasicPersistenceTest extends JOhmTestBase {
         Thread.sleep(1500L);
         savedBook = JOhm.get(Book.class, book.getId());
         assertNull(savedBook);
+    }
+    
+    @Test
+    public void shouldNotExpireIndex() throws InterruptedException {
+        
+        User user = new User();
+        user.setName("i_will_not_be_expired");
+        user = JOhm.save(user);
+        JOhm.expire(user, 1);
+        User savedUser = JOhm.get(User.class, user.getId());
+        assertEquals(user.getName(), savedUser.getName());
+
+        // wait of expire
+        Thread.sleep(1500L);
+        savedUser = JOhm.get(User.class, user.getId());
+        assertNull(savedUser);
+        
+        Nest userNest = new Nest("User");
+        userNest.setPool(jedisPool);
+        assertEquals("User", userNest.key());
+        assertFalse(userNest.cat(user.getId()).exists());
+        assertTrue(userNest.cat("name").cat("i_will_not_be_expired").exists());
+    }
+    
+    @Test
+    public void shouldExpireIndex() throws InterruptedException {
+        
+        User user = new User();
+        user.setName("i_will_be_expired");
+        user = JOhm.save(user);
+        JOhm.expire(user, 1, true); // call which will expire model and indexes
+        User savedUser = JOhm.get(User.class, user.getId());
+        assertEquals(user.getName(), savedUser.getName());
+
+        // wait of expire
+        Thread.sleep(1500L);
+        savedUser = JOhm.get(User.class, user.getId());
+        assertNull(savedUser);
+        
+        Nest userNest = new Nest("User");
+        userNest.setPool(jedisPool);
+        assertEquals("User", userNest.key());
+        assertFalse(userNest.cat(user.getId()).exists());
+        assertFalse(userNest.cat("name").cat("i_will_be_expired").exists());
     }
     
     @Test
