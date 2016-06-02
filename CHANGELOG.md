@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - JOhm.setPool returns JedisPool instead of void - so it can be used as factory-method for Spring Dependency Injection
 - BREAKING CHANGE - JOhm.getAll is no longer supported by default - you have to add an explicit annotation to the model: [@SupportAll](src/main/java/redis/clients/johm/SupportAll.java)
+- HA - Add Sentinel support - task #6 - now you can connect to Redis HA cluster via Redis sentinels and use JOhm with HA!
 
 ### Added
 - Expire support: JOhm.expire(model, seconds)
