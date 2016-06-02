@@ -1,16 +1,20 @@
-package redis.clients.johm;
+package redis.clients.johm.sentinel;
 
 import java.util.Set;
 
 import org.junit.Test;
 
+import redis.clients.johm.JOhm;
+import redis.clients.johm.JOhmException;
+import redis.clients.johm.MissingIdException;
+import redis.clients.johm.Nest;
 import redis.clients.johm.models.Book;
 import redis.clients.johm.models.Country;
 import redis.clients.johm.models.FaultyModel;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
-public class BasicPersistenceTest extends JOhmTestBase {
+public class BasicSentinelPersistenceTest extends JOhmTestSentinelBase {
     @Test
     public void save() {
         User user = new User();
