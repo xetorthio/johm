@@ -227,7 +227,7 @@ public final class JOhm {
 	@SuppressWarnings("unchecked")
 	public static <T> T save(final Object model, boolean saveChildren) {
 		if (!isNew(model)) {
-			delete(model.getClass(), JOhmUtils.getId(model));
+			delete(model.getClass(), JOhmUtils.getId(model), true, saveChildren);
 		}
 		final Nest nest = initIfNeeded(model);
 
@@ -357,7 +357,46 @@ public final class JOhm {
      * @return Long
      */
     public static <T> Long expire(T model, int seconds) {
+        return expire(model, seconds, false);
+    }
+    
+    /**
+     * Set expiration period of model and indexes (optionally)
+     * @param <T>
+     * @param model
+     * @param seconds
+     * @param expireIndexes should indexes expire
+     * @return Long
+     */
+    public static <T> Long expire(T model, int seconds, boolean expireIndexes) {
         Nest<T> nest = initIfNeeded(model);
+        
+        if (expireIndexes) {
+            // think about promoting deleteChildren as default behavior so
+            // that this field lookup gets folded into that
+            // if-deleteChildren block
+            for (Field field : JOhmUtils.gatherAllFields(model.getClass())) {
+                if (field.isAnnotationPresent(Indexed.class)) {
+                    field.setAccessible(true);
+                    Object fieldValue = null;
+                    try {
+                        fieldValue = field.get(model);
+                    } catch (IllegalArgumentException e) {
+                        throw new JOhmException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new JOhmException(e);
+                    }
+                    if (fieldValue != null
+                            && field.isAnnotationPresent(Reference.class)) {
+                        fieldValue = JOhmUtils.getId(fieldValue);
+                    }
+                    if (!JOhmUtils.isNullOrEmpty(fieldValue)) {
+                        nest.cat(field.getName()).cat(fieldValue).expire(seconds);
+                    }
+                }
+            }
+        }
+        
         return nest.cat(JOhmUtils.getId(model)).expire(seconds);
     }
 
