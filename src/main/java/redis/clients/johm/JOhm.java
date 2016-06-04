@@ -8,7 +8,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.TransactionBlock;
-import redis.clients.johm.collections.RedisArray;
+import redis.clients.johm.collections.*;
 import redis.clients.util.Pool;
 
 /**
@@ -450,14 +450,8 @@ public final class JOhm {
 							throw new JOhmException(e);
 						}
 					}
-					if (field.isAnnotationPresent(Array.class)) {
-						field.setAccessible(true);
-						Array annotation = field.getAnnotation(Array.class);
-						RedisArray redisArray = new RedisArray(annotation
-								.length(), annotation.of(), nest, field,
-								persistedModel);
-						redisArray.clear();
-					}
+
+					clearRedisCollection(field, nest, persistedModel);
 				}
 			}
 
@@ -465,6 +459,35 @@ public final class JOhm {
 			deleted = nest.cat(id).del() == 1;
 		}
 		return deleted;
+	}
+
+	/* TODO: refactor */
+	private static void clearRedisCollection(Field field, Nest nest, Object persistedModel) {
+		if (field.isAnnotationPresent(Array.class)) {
+			field.setAccessible(true);
+			Array annotation = field.getAnnotation(Array.class);
+			new RedisArray(annotation.length(), annotation.of(), nest, field, persistedModel).clear();
+		}
+		if (field.isAnnotationPresent(CollectionList.class)) {
+			field.setAccessible(true);
+			CollectionList annotation = field.getAnnotation(CollectionList.class);
+			new RedisList(annotation.of(), nest, field, persistedModel).clear();
+		}
+		if (field.isAnnotationPresent(CollectionSet.class)) {
+			field.setAccessible(true);
+			CollectionSet annotation = field.getAnnotation(CollectionSet.class);
+			new RedisSet(annotation.of(), nest, field, persistedModel).clear();
+		}
+		if (field.isAnnotationPresent(CollectionSortedSet.class)) {
+			field.setAccessible(true);
+			CollectionSortedSet annotation = field.getAnnotation(CollectionSortedSet.class);
+			new RedisSortedSet(annotation.of(), annotation.by(), nest, field, persistedModel).clear();
+		}
+		if (field.isAnnotationPresent(CollectionMap.class)) {
+			field.setAccessible(true);
+			CollectionMap annotation = field.getAnnotation(CollectionMap.class);
+			new RedisMap(annotation.key(), annotation.value(), nest, field, persistedModel).clear();
+		}
 	}
 
 	/**
