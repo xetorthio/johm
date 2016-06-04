@@ -6,6 +6,8 @@ import java.util.Set;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.TransactionBlock;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.Pool;
 
 public class Nest<T> {
@@ -121,9 +123,16 @@ public class Nest<T> {
 
     public List<Object> multi(TransactionBlock transaction) {
         Jedis jedis = getResource();
-        List<Object> multi = jedis.multi(transaction);
-        returnResource(jedis);
-        return multi;
+        try {
+            return jedis.multi(transaction);
+        } catch (Exception e) {
+            if (jedis.getClient().isInMulti()) {
+                jedis.getClient().discard();
+            }
+            throw new JedisException(e);
+        } finally {
+            returnResource(jedis);
+        }
     }
 
     public Long del() {

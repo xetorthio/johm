@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Response;
+import redis.clients.jedis.Transaction;
 import redis.clients.jedis.TransactionBlock;
 import redis.clients.johm.collections.RedisArray;
 import redis.clients.util.Pool;
@@ -268,14 +270,12 @@ public final class JOhm {
 						if (field.getType().equals(Date.class)) {
 							try {
 								hashedObject.put(fieldName,
-														new SimpleDateFormat(field.getAnnotation(Attribute.class).date())
-															.format((Date) fieldValueObject)
+									new SimpleDateFormat(field.getAnnotation(Attribute.class).date()).format((Date) fieldValueObject)
 								);
 							} catch (Throwable e) {
 								// try with a fallback date format
 								hashedObject.put(fieldName,
-														new SimpleDateFormat(Attribute.DEFAULT_DATE_FORMAT)
-																.format((Date) fieldValueObject)
+									new SimpleDateFormat(Attribute.DEFAULT_DATE_FORMAT).format((Date) fieldValueObject)
 								);
 							}
 						}
@@ -294,8 +294,7 @@ public final class JOhm {
 						if (saveChildren) {
 							save(child, saveChildren); // some more work to do
 						}
-						hashedObject.put(fieldName, String.valueOf(JOhmUtils
-								.getId(child)));
+						hashedObject.put(fieldName, String.valueOf(JOhmUtils.getId(child)));
 					}
 				}
 				if (field.isAnnotationPresent(Indexed.class)) {
@@ -316,20 +315,19 @@ public final class JOhm {
 			throw new JOhmException(e);
 		}
 
-		nest.multi(new TransactionBlock() {
-			public void execute() {
-			    // to support getAll
-                if (model.getClass().isAnnotationPresent(SupportAll.class)) {
-                    nest.cat("all").sadd(String.valueOf(JOhmUtils.getId(model)));
-                }
-				del(nest.cat(JOhmUtils.getId(model)).key());
-				hmset(nest.cat(JOhmUtils.getId(model)).key(), hashedObject);
-			}
-		});
+		// this was in a nest.multi but as explained here https://github.com/xetorthio/jedis/pull/498
+		// it has been deprecated.
+		Long modelId = JOhmUtils.getId(model);
+		// to support getAll
+		if (model.getClass().isAnnotationPresent(SupportAll.class)) {
+			nest.cat("all").sadd(String.valueOf(modelId));
+		}
+		nest.cat(modelId).del();
+		nest.cat(modelId).hmset(hashedObject);
+		// \\
 
 		if (pendingArraysToPersist != null && pendingArraysToPersist.size() > 0) {
-			for (Map.Entry<RedisArray<Object>, Object[]> arrayEntry : pendingArraysToPersist
-					.entrySet()) {
+			for (Map.Entry<RedisArray<Object>, Object[]> arrayEntry : pendingArraysToPersist.entrySet()) {
 				arrayEntry.getKey().write(arrayEntry.getValue());
 			}
 		}

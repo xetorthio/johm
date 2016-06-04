@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.johm.issues.Issue9Item;
 import redis.clients.johm.models.Book;
 import redis.clients.johm.models.Country;
 import redis.clients.johm.models.FaultyModel;
@@ -423,6 +425,12 @@ public class BasicPersistenceTest extends JOhmTestBase {
         assertNotNull(JOhm.get(User.class, user.getId()));
         JOhm.flushDb();
         assertNull(JOhm.get(User.class, user.getId()));
+    }
+
+    @Test(expected = JedisDataException.class)
+    public void testIssue9() {
+        Issue9Item item = new Issue9Item(1337l);
+        JOhm.save(item);
     }
 }
 
