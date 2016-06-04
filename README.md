@@ -38,18 +38,18 @@ I will release a version of this JOhm fork every time I fix a bug or merge a PR.
 </repositories>
 ```
 
-Then just add the dependency to this JOhm version, last released version is currently **0.6.4** (last snapshot is **0.6.5-SNAPSHOT**):
+Then just add the dependency to this JOhm version, last released version is currently **0.6.7** (last snapshot is **0.6.8-SNAPSHOT**):
 
 ```xml
 <dependency>
     <groupId>redis</groupId>
     <artifactId>johm</artifactId>
-    <version>0.6.4</version>
+    <version>0.6.7</version>
     <type>jar</type>
 </dependency>
 ```
 
-JOhm currently uses **Jedis `2.7.0`**
+JOhm currently uses **Jedis `2.8.0`**
 
 
 ## What can I do with JOhm?
