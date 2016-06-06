@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 Nothing for the moment.
 
-## [0.6.7] - 2016-04-25
+## [0.6.7] - 2016-06-05
 ### Added
 - Expire support: JOhm.expire(model, seconds)
 - added expireIndexes support - with an overloaded method "expire"
