@@ -227,4 +227,22 @@ public class CollectionsDataTypeTest extends JOhmTestBase {
         assertTrue(Arrays.asList(savedDistro.getBuildTools()).contains(rake));
         assertTrue(Arrays.asList(savedDistro.getBuildTools()).contains(make));
     }
+
+    @Test
+    public void testDoesNotLeaveOrphanedKeys() {
+        redis.clients.johm.models.Test test = new redis.clients.johm.models.Test();
+        test.name = "Test";
+        JOhm.save(test);
+
+        redis.clients.johm.models.TestMessage testMessage = new redis.clients.johm.models.TestMessage();
+        testMessage.message = "HelloWorld";
+        JOhm.save(testMessage);
+        test.messages.add(testMessage);
+
+        JOhm.delete(redis.clients.johm.models.Test.class, test.id, true, true);
+
+        String key = String.format("Test:%d:messages", test.id);
+        boolean keyExists = jedisPool.getResource().exists(key);
+        assertFalse(keyExists);
+    }
 }

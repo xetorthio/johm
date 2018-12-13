@@ -5,18 +5,26 @@ import java.util.Map;
 import java.util.Set;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.TransactionBlock;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.util.Pool;
 
 public class Nest<T> {
     private static final String COLON = ":";
+    private static final String SPACE = " ";
     private StringBuilder sb;
     private String key;
-    private JedisPool jedisPool;
+    private List<String> keys;
+    private Pool<Jedis> jedisPool;
 
-    public void setJedisPool(JedisPool jedisPool) {
-        this.jedisPool = jedisPool;
+    public void setPool(Pool<Jedis> pool) {
+        this.jedisPool = pool;
         checkRedisLiveness();
+    }
+
+    public List<String> keys() {
+        return keys;
     }
 
     public Nest<T> fork() {
@@ -32,11 +40,11 @@ public class Nest<T> {
     }
 
     public Nest(Class<T> clazz) {
-        this.key = clazz.getSimpleName();
+        this.key = JOhmUtils.getModelKey(clazz);
     }
 
     public Nest(T model) {
-        this.key = model.getClass().getSimpleName();
+        this.key = JOhmUtils.getModelKey(model.getClass());
     }
 
     public String key() {
@@ -53,6 +61,14 @@ public class Nest<T> {
             sb.append(key);
             sb.append(COLON);
         }
+    }
+
+    public Nest<T> next() {
+        if (keys == null) {
+            keys = new java.util.ArrayList<String>();
+        }
+        keys.add(key());
+        return this;
     }
 
     public Nest<T> cat(int id) {
@@ -98,11 +114,25 @@ public class Nest<T> {
         return incr;
     }
 
+    public Long expire(int seconds) {
+        Jedis jedis = getResource();
+        Long expire = jedis.expire(key(), seconds);
+        returnResource(jedis);
+        return expire;
+    }
+
     public List<Object> multi(TransactionBlock transaction) {
         Jedis jedis = getResource();
-        List<Object> multi = jedis.multi(transaction);
-        returnResource(jedis);
-        return multi;
+        try {
+            return jedis.multi(transaction);
+        } catch (Exception e) {
+            if (jedis.getClient().isInMulti()) {
+                jedis.getClient().discard();
+            }
+            throw new JedisException(e);
+        } finally {
+            returnResource(jedis);
+        }
     }
 
     public Long del() {
@@ -177,6 +207,13 @@ public class Nest<T> {
         return reply;
     }
 
+    public Set<String> sinter() {
+        Jedis jedis = getResource();
+        Set<String> members = jedis.sinter((String[]) keys.toArray(new String[0]));
+        returnResource(jedis);
+        return members;
+    }
+
     public Set<String> smembers() {
         Jedis jedis = getResource();
         Set<String> members = jedis.smembers(key());
@@ -249,13 +286,15 @@ public class Nest<T> {
         return zadd;
     }
 
-    private void returnResource(final Jedis jedis) {
+    public void returnResource(final Jedis jedis) {
         jedisPool.returnResource(jedis);
     }
 
-    private Jedis getResource() {
-        Jedis jedis;
-        jedis = jedisPool.getResource();
+    public Jedis getResource() {
+        Jedis jedis = jedisPool.getResource();
+        // check for selected database
+        if (!jedis.getDB().equals(JOhm.dbIndex))
+            jedis.select((int) JOhm.dbIndex);
         return jedis;
     }
 

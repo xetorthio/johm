@@ -1,19 +1,20 @@
-package redis.clients.johm;
+package redis.clients.johm.sentinel;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
 
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.johm.issues.Issue9Item;
+import redis.clients.johm.JOhm;
+import redis.clients.johm.JOhmException;
+import redis.clients.johm.MissingIdException;
+import redis.clients.johm.Nest;
 import redis.clients.johm.models.Book;
 import redis.clients.johm.models.Country;
 import redis.clients.johm.models.FaultyModel;
 import redis.clients.johm.models.Item;
 import redis.clients.johm.models.User;
 
-public class BasicPersistenceTest extends JOhmTestBase {
+public class BasicSentinelPersistenceTest extends JOhmTestSentinelBase {
     @Test
     public void save() {
         User user = new User();
@@ -237,7 +238,7 @@ public class BasicPersistenceTest extends JOhmTestBase {
     }
     
     @Test
-    public void shouldExpireModel() throws InterruptedException {
+    public void TestExpiration() throws InterruptedException {
         Book book = new Book();
         book.setName("expritation title");
         JOhm.save(book);
@@ -249,149 +250,6 @@ public class BasicPersistenceTest extends JOhmTestBase {
         Thread.sleep(1500L);
         savedBook = JOhm.get(Book.class, book.getId());
         assertNull(savedBook);
-    }
-    
-    @Test
-    public void shouldNotExpireIndex() throws InterruptedException {
-        
-        User user = new User();
-        user.setName("i_will_not_be_expired");
-        user = JOhm.save(user);
-        JOhm.expire(user, 1);
-        User savedUser = JOhm.get(User.class, user.getId());
-        assertEquals(user.getName(), savedUser.getName());
-
-        // wait of expire
-        Thread.sleep(1500L);
-        savedUser = JOhm.get(User.class, user.getId());
-        assertNull(savedUser);
-        
-        Nest userNest = new Nest("User");
-        userNest.setPool(jedisPool);
-        assertEquals("User", userNest.key());
-        assertFalse(userNest.cat(user.getId()).exists());
-        assertTrue(userNest.cat("name").cat("i_will_not_be_expired").exists());
-    }
-    
-    @Test
-    public void shouldExpireIndex() throws InterruptedException {
-        
-        User user = new User();
-        user.setName("i_will_be_expired");
-        user = JOhm.save(user);
-        JOhm.expire(user, 1, true); // call which will expire model and indexes
-        User savedUser = JOhm.get(User.class, user.getId());
-        assertEquals(user.getName(), savedUser.getName());
-
-        // wait of expire
-        Thread.sleep(1500L);
-        savedUser = JOhm.get(User.class, user.getId());
-        assertNull(savedUser);
-        
-        Nest userNest = new Nest("User");
-        userNest.setPool(jedisPool);
-        assertEquals("User", userNest.key());
-        assertFalse(userNest.cat(user.getId()).exists());
-        assertFalse(userNest.cat("name").cat("i_will_be_expired").exists());
-    }
-    
-    @Test
-    public void shouldDeleteIndexesAndNotLeaveThemOrphaned() {
-        User user = new User();
-        user.setName("i_will_be_deleted");
-        user = JOhm.save(user);
-
-        List<Object> users = JOhm.find(User.class, "name", "i_will_be_deleted");
-        assertEquals(1, users.size());
-        
-        JOhm.delete(User.class, user.getId());
-        
-        Nest usersNest = new Nest("User");
-        usersNest.setPool(jedisPool);
-        assertEquals("User", usersNest.key());
-        assertFalse(usersNest.cat(user.getId()).exists());
-        assertFalse(usersNest.cat("name").cat("i_will_be_deleted").exists());
-        
-        users = JOhm.find(User.class, "name", "i_will_be_deleted");
-        assertEquals(0, users.size());
-    }
-    
-    @Test
-    public void shouldNotDeleteIndexesWhenThereAreMultipleEntries() {
-        User user1 = new User();
-        String indexName = "IndexDeleteTest";
-        user1.setName(indexName);
-        user1 = JOhm.save(user1);
-        
-        User user2 = new User();
-        user2.setName(indexName);
-        user2 = JOhm.save(user2);
-
-        List<Object> users = JOhm.find(User.class, "name", indexName);
-        assertEquals(2, users.size());
-        
-        JOhm.delete(User.class, user1.getId());
-        
-        Nest usersNest = new Nest("User");
-        usersNest.setPool(jedisPool);
-
-        // first user
-        assertEquals("User", usersNest.key());
-        assertFalse(usersNest.cat(user1.getId()).exists());
-        assertTrue(usersNest.cat("name").cat(indexName).exists());
-        
-        // second user
-        assertEquals("User", usersNest.key());
-        assertTrue(usersNest.cat(user2.getId()).exists());
-        assertTrue(usersNest.cat("name").cat(indexName).exists());
-        
-        users = JOhm.find(User.class, "name", indexName);
-        assertEquals(1, users.size());
-        
-        JOhm.delete(User.class, user2.getId());
-        
-        assertFalse("Index: IndexDeleteTest should not exist", usersNest.cat("name").cat(indexName).exists());
-        users = JOhm.find(User.class, "name", indexName);
-        assertEquals(0, users.size());
-    }
-    
-    @Test
-    public void whenSavingExistingModelIndexesShouldNotBeLeftOrphaned() {
-        User user = new User();
-        String indexName = "i_will_be_then_deleted_in_the_end";
-        user.setName(indexName);
-        user.setRoom("A");
-        user = JOhm.save(user);
-
-        Nest usersNest = new Nest("User");
-        usersNest.setPool(jedisPool);
-        assertEquals("User", usersNest.key());
-        assertTrue(usersNest.cat(user.getId()).exists());
-        assertTrue(usersNest.cat("name").cat(indexName).exists());
-        
-        List<Object> users = JOhm.find(User.class, "name", indexName);
-        assertEquals(1, users.size());
-        
-        String newIndexName = "new_index";
-        user.setName(newIndexName);
-        user.setRoom("B");
-        JOhm.save(user, true);
-        
-        assertTrue(usersNest.cat(user.getId()).exists());
-        assertTrue(usersNest.cat("name").cat(newIndexName).exists());
-        assertFalse(usersNest.cat("name").cat(indexName).exists());
-        
-        JOhm.delete(User.class, user.getId());
-        
-        assertFalse(usersNest.cat(user.getId()).exists());
-        assertFalse(usersNest.cat("name").cat(newIndexName).exists());
-        assertFalse(usersNest.cat("name").cat(indexName).exists());
-        
-        users = JOhm.find(User.class, "name", indexName);
-        assertEquals(0, users.size());
-        
-        users = JOhm.find(User.class, "name", newIndexName);
-        assertEquals(0, users.size());
     }
 
     @Test
@@ -425,12 +283,6 @@ public class BasicPersistenceTest extends JOhmTestBase {
         assertNotNull(JOhm.get(User.class, user.getId()));
         JOhm.flushDb();
         assertNull(JOhm.get(User.class, user.getId()));
-    }
-
-    @Test(expected = JedisDataException.class)
-    public void testIssue9() {
-        Issue9Item item = new Issue9Item(1337l);
-        JOhm.save(item);
     }
 }
 

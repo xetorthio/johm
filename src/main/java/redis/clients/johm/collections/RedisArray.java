@@ -97,7 +97,7 @@ public class RedisArray<T> {
                 .lindex(index);
         if (!JOhmUtils.isNullOrEmpty(key)) {
             if (johmElementType == JOhmCollectionDataType.PRIMITIVE) {
-                element = (T) Convertor.convert(elementClazz, key);
+                element = (T) Convertor.convert(field, elementClazz, key);
             } else if (johmElementType == JOhmCollectionDataType.MODEL) {
                 element = JOhm.<T> get(elementClazz, Integer.valueOf(key));
             }

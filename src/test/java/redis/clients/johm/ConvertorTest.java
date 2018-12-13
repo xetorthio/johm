@@ -7,6 +7,7 @@ import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 
+import redis.clients.johm.models.FooEnum;
 import redis.clients.johm.models.User;
 
 public class ConvertorTest extends Assert {
@@ -200,7 +201,7 @@ public class ConvertorTest extends Assert {
         converted = JOhmUtils.Convertor.convert(BigDecimal.class, value);
         assertTrue(converted.getClass().equals(BigDecimal.class));
         assertEquals(BigDecimal.valueOf(-10.999d), converted);
-
+        
         // biginteger
         value = "-10999";
         converted = JOhmUtils.Convertor.convert(BigInteger.class, value);
@@ -215,16 +216,85 @@ public class ConvertorTest extends Assert {
     }
 
     @Test
+    public void testEnumConvertors() {
+        Object converted = JOhmUtils.Convertor.convert(FooEnum.class, "BAR");
+        assertEquals(FooEnum.BAR, converted);
+
+        converted = JOhmUtils.Convertor.convert(FooEnum.class, "FOO");
+        assertNotSame(FooEnum.BAZZ, converted);
+
+        converted = JOhmUtils.Convertor.convert(FooEnum.class, null);
+        assertEquals(null, converted);
+    }
+
+    @Test
     public void testUnsupportedConvertors() {
         String value = "10";
         Object converted = JOhmUtils.Convertor.convert(new int[] {}.getClass(),
                 value);
         assertNull(converted);
 
-        converted = JOhmUtils.Convertor.convert(Enum.class, value);
-        assertNull(converted);
-
         converted = JOhmUtils.Convertor.convert(Collection.class, value);
         assertNull(converted);
+    }
+    
+    @Test
+    public void testNullValues() {
+        String value = null;
+        Object converted = null;
+        
+        // int NULL
+        value = null;
+        converted = JOhmUtils.Convertor.convert(Integer.class, value);
+        assertTrue(converted.getClass().equals(Integer.class));
+        assertEquals(Integer.valueOf("0"), converted);
+
+        converted = JOhmUtils.Convertor.convert(int.class, value);
+        assertTrue(converted.getClass().equals(Integer.class));
+        assertEquals(Integer.valueOf("0"), converted);
+
+        // float NULL
+        value = null;
+        converted = JOhmUtils.Convertor.convert(Float.class, value);
+        assertTrue(converted.getClass().equals(Float.class));
+        assertEquals(Float.valueOf("0"), converted);
+
+        converted = JOhmUtils.Convertor.convert(float.class, value);
+        assertTrue(converted.getClass().equals(Float.class));
+        assertEquals(Float.valueOf("0"), converted);
+
+        // double NULL
+        value = null;
+        converted = JOhmUtils.Convertor.convert(Double.class, value);
+        assertTrue(converted.getClass().equals(Double.class));
+        assertEquals(Double.valueOf("0"), converted);
+
+        converted = JOhmUtils.Convertor.convert(double.class, value);
+        assertTrue(converted.getClass().equals(Double.class));
+        assertEquals(Double.valueOf("0"), converted);
+
+        // long NULL
+        value = null;
+        converted = JOhmUtils.Convertor.convert(Long.class, value);
+        assertTrue(converted.getClass().equals(Long.class));
+        assertEquals(Long.valueOf("0"), converted);
+
+        converted = JOhmUtils.Convertor.convert(long.class, value);
+        assertTrue(converted.getClass().equals(Long.class));
+        assertEquals(Long.valueOf("0"), converted);
+
+        
+        // bigdecimal NULL
+        value = null;
+        converted = JOhmUtils.Convertor.convert(BigDecimal.class, value);
+        assertTrue(converted.getClass().equals(BigDecimal.class));
+        assertEquals(BigDecimal.valueOf(0), converted);
+        
+        // biginteger NULL
+        value = null;
+        converted = JOhmUtils.Convertor.convert(BigInteger.class, value);
+        assertTrue(converted.getClass().equals(BigInteger.class));
+        assertEquals(BigInteger.valueOf(0), converted);
+        
     }
 }

@@ -4,13 +4,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import redis.clients.johm.collections.RedisList;
 import redis.clients.johm.collections.RedisMap;
@@ -37,16 +33,26 @@ public final class JOhmUtils {
         return id;
     }
 
+    static String getModelKey(Class<?> clazz) {
+        Model model = clazz.getAnnotation(Model.class);
+        return model == null || model.value().equals("") ? clazz.getSimpleName() : model.value();
+    }
+
     static boolean isNew(final Object model) {
         return getId(model) == null;
     }
 
     @SuppressWarnings("unchecked")
-    static void initCollections(final Object model, final Nest<?> nest) {
+    static void initCollections(final Object model, final Nest<?> nest, String... ignoring) {
         if (model == null || nest == null) {
             return;
         }
+
+        List<String> ignoredProperties = Arrays.asList(ignoring);
         for (Field field : model.getClass().getDeclaredFields()) {
+            if (ignoredProperties.contains(field.getName()))
+                continue;
+
             field.setAccessible(true);
             try {
                 if (field.isAnnotationPresent(CollectionList.class)) {
@@ -56,7 +62,7 @@ public final class JOhmUtils {
                         CollectionList annotation = field
                                 .getAnnotation(CollectionList.class);
                         RedisList<Object> redisList = new RedisList<Object>(
-                                annotation.of(), nest, field, model);
+                                annotation.of(), nest, field, model, ignoring);
                         field.set(model, redisList);
                     }
                 }
@@ -178,13 +184,18 @@ public final class JOhmUtils {
         return false;
     }
 
-    static List<Field> gatherAllFields(Class<?> clazz) {
+    static List<Field> gatherAllFields(Class<?> clazz, String... ignoring) {
         List<Field> allFields = new ArrayList<Field>();
         for (Field field : clazz.getDeclaredFields()) {
             allFields.add(field);
         }
         while ((clazz = clazz.getSuperclass()) != null) {
             allFields.addAll(gatherAllFields(clazz));
+        }
+        for (String ignore: ignoring) {
+            if (allFields.contains(ignore)) {
+                allFields.remove(ignore);
+            }
         }
 
         return Collections.unmodifiableList(allFields);
@@ -196,10 +207,14 @@ public final class JOhmUtils {
 
     public final static class Convertor {
         static Object convert(final Field field, final String value) {
-            return convert(field.getType(), value);
+            return convert(field, field.getType(), value);
         }
 
-        public static Object convert(final Class<?> type, final String value) {
+        public static Object convert(final Class<?> type, String value) {
+            return convert(null, type, value);
+        }
+
+        public static Object convert(final Field field, final Class<?> type, final String value) {
             if (type.equals(Byte.class) || type.equals(byte.class)) {
                 return new Byte(value);
             }
@@ -231,26 +246,52 @@ public final class JOhmUtils {
                 return new Float(value);
             }
             if (type.equals(Double.class) || type.equals(double.class)) {
+                if (value == null) {
+                    return 0d;
+                }
                 return new Double(value);
             }
             if (type.equals(Long.class) || type.equals(long.class)) {
+                if (value == null) {
+                    return 0l;
+                }
                 return new Long(value);
             }
             if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                if (value == null) {
+                    return false;
+                }
                 return new Boolean(value);
             }
 
             // Higher precision folks
             if (type.equals(BigDecimal.class)) {
+                if (value == null) return BigDecimal.ZERO;
                 return new BigDecimal(value);
             }
             if (type.equals(BigInteger.class)) {
+                if (value == null) return BigInteger.ZERO;
                 return new BigInteger(value);
             }
 
             if (type.isEnum() || type.equals(Enum.class)) {
-                // return Enum.valueOf(type, value);
-                return null; // TODO: handle these
+                return value == null ? null : Enum.valueOf((Class<Enum>)type, value);
+            }
+
+            if (type.equals(Date.class)) {
+                Attribute attr = field.getAnnotation(Attribute.class);
+                if (attr != null) {
+                    try {
+                        return value == null ? new Date(0) : new SimpleDateFormat(attr.date()).parse(value);
+                    } catch (ParseException e) {
+                        try {
+                            return new SimpleDateFormat(Attribute.DEFAULT_DATE_FORMAT).parse(value);
+                        } catch (ParseException ee) {
+                            throw new IllegalArgumentException(
+                                "Could not parse value as date `" + value + "` with pattern `" + attr.date() + "`.");
+                        }
+                    }
+                }
             }
 
             // Raw Collections are unsupported
@@ -280,7 +321,9 @@ public final class JOhmUtils {
                     || type.equals(Boolean.class) || type.equals(boolean.class)
                     || type.equals(BigDecimal.class)
                     || type.equals(BigInteger.class)
-                    || type.equals(String.class)) {
+                    || type.equals(String.class)
+                    || type.equals(Date.class)
+                    || (type.isEnum() || type.equals(Enum.class))) {
             } else {
                 throw new JOhmException(field.getType().getSimpleName()
                         + " is not a JOhm-supported Attribute");
@@ -361,6 +404,13 @@ public final class JOhmUtils {
             if (modelClazz.isInterface()) {
                 throw new JOhmException(
                         "An interface cannot be annotated as a Model");
+            }
+        }
+
+        static void checkSupportAll(final Class<?> modelClazz) {
+            if (!modelClazz.isAnnotationPresent(SupportAll.class)) {
+                throw new JOhmException(
+                        "This Model does'nt support getAll(). Please annotate with @SupportAll");
             }
         }
 
@@ -479,6 +529,7 @@ public final class JOhmUtils {
         JOHM_SUPPORTED_PRIMITIVES.add(boolean.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigDecimal.class);
         JOHM_SUPPORTED_PRIMITIVES.add(BigInteger.class);
+        JOHM_SUPPORTED_PRIMITIVES.add(Date.class);
 
         JOHM_SUPPORTED_ANNOTATIONS.add(Array.class);
         JOHM_SUPPORTED_ANNOTATIONS.add(Attribute.class);
