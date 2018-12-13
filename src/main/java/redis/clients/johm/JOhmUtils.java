@@ -282,7 +282,7 @@ public final class JOhmUtils {
                 Attribute attr = field.getAnnotation(Attribute.class);
                 if (attr != null) {
                     try {
-                        return new SimpleDateFormat(attr.date()).parse(value);
+                        return value == null ? new Date(0) : new SimpleDateFormat(attr.date()).parse(value);
                     } catch (ParseException e) {
                         try {
                             return new SimpleDateFormat(Attribute.DEFAULT_DATE_FORMAT).parse(value);
